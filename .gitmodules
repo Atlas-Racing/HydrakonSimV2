@@ -1,0 +1,3 @@
+[submodule "src/hydrakon_camera/Depth-Anything-V2"]
+	path = src/hydrakon_camera/Depth-Anything-V2
+	url = https://github.com/DepthAnything/Depth-Anything-V2.git
