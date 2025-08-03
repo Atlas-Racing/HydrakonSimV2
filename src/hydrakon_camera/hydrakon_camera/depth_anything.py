@@ -13,26 +13,21 @@ import os
 class DepthAnythingProcessor(Node):
     def __init__(self):
         super().__init__('depth_anything_processor')
-        
-        # ROS setup
         self.bridge = CvBridge()
-        
-        # Subscribe to RGB camera feed
+
         self.rgb_subscriber = self.create_subscription(
             Image,
             '/camera',
             self.rgb_callback,
             10
         )
-        
-        # Publisher for depth estimation
+
         self.depth_publisher = self.create_publisher(
             Image,
             '/camera/depthanything',
             10
         )
-        
-        # Initialize Depth Anything V2 model
+
         self.setup_depth_model()
         
         self.get_logger().info("Depth Anything V2 processor initialized")
