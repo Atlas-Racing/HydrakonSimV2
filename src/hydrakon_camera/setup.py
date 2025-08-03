@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'depth_camera_spawner = hydrakon_camera.depth_camera:main',
             'rgb_camera_spawner = hydrakon_camera.camera:main',
+            'depth_anything_processor = hydrakon_camera.depth_anything:main',
         ],
     },
 )

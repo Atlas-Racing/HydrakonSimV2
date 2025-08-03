@@ -47,4 +47,17 @@ def generate_launch_description():
                 )
             ]
         ),
+
+        TimerAction(
+            period=3.0,
+            actions=[
+                Node(
+                    package='hydrakon_camera',
+                    executable='depth_anything_processor',
+                    name='depth_anything_processor',
+                    output='screen',
+                    cwd='/home/aditya/HydrakonSimV2/src/hydrakon_camera/Depth-Anything-V2',
+                )
+            ]
+        ),
     ])
