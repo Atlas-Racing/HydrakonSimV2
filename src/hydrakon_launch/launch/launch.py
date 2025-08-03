@@ -60,4 +60,30 @@ def generate_launch_description():
                 )
             ]
         ),
+
+        TimerAction(
+            period=4.0,
+            actions=[
+                Node(
+                    package='rosapi',
+                    executable='rosapi_node',
+                    name='rosapi',
+                    output='screen'
+                ),
+                Node(
+                    package='rosbridge_server',
+                    executable='rosbridge_websocket',
+                    name='rosbridge_websocket',
+                    output='screen',
+                    parameters=[
+                        {'port': 9090},
+                        {'address': '0.0.0.0'},
+                        {'authenticate': False},
+                        {'fragment_timeout': 600},
+                        {'delay_between_messages': 0}
+                    ]
+                )
+            ]
+        ),
+        
     ])

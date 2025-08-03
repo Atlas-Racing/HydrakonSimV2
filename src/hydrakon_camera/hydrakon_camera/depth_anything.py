@@ -69,6 +69,16 @@ class DepthAnythingProcessor(Node):
                     return
                 
                 self.model = self.model.to(self.device).eval()
+
+                try:
+                    if hasattr(torch, 'compile') and torch.__version__ >= '2.0':
+                        self.get_logger().info("Applying torch.compile() optimization...")
+                        self.model = torch.compile(self.model, mode='reduce-overhead')
+                        self.get_logger().info("torch.compile() optimization applied successfully")
+                    else:
+                        self.get_logger().info("torch.compile() not available (requires PyTorch 2.0+)")
+                except Exception as e:
+                    self.get_logger().warn(f"torch.compile() failed, continuing without optimization: {str(e)}")
                 
                 self.get_logger().info(f"Depth Anything V2 model ({encoder}) loaded successfully")
                 
@@ -91,7 +101,9 @@ class DepthAnythingProcessor(Node):
             
         try:
             cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-            depth_map = self.model.infer_image(cv_image)
+
+            with torch.no_grad():
+                depth_map = self.model.infer_image(cv_image)
             
             depth_normalized = (depth_map - depth_map.min()) / (depth_map.max() - depth_map.min())
 
