@@ -28,6 +28,12 @@ class DepthAnythingProcessor(Node):
             10
         )
 
+        self.colored_depth_publisher = self.create_publisher(
+            Image,
+            '/camera/depthanything_colored',
+            10
+        )
+
         self.setup_depth_model()
         
         self.get_logger().info("Depth Anything V2 processor initialized")
@@ -88,15 +94,45 @@ class DepthAnythingProcessor(Node):
             depth_map = self.model.infer_image(cv_image)
             
             depth_normalized = (depth_map - depth_map.min()) / (depth_map.max() - depth_map.min())
-            
+
             depth_16bit = (depth_normalized * 65535).astype(np.uint16)
-            
             depth_msg = self.bridge.cv2_to_imgmsg(depth_16bit, encoding="16UC1")
-            depth_msg.header = msg.header  # Copy original header
+            depth_msg.header = msg.header
             depth_msg.header.frame_id = "camera_depth_anything_frame"
-            
-            # Publish depth estimation
             self.depth_publisher.publish(depth_msg)
+            
+            # Change as required:
+            # cv2.COLORMAP_AUTUMN - Red to yellow gradient
+            # cv2.COLORMAP_BONE - Grayscale with blue tint
+            # cv2.COLORMAP_JET - Blue → Cyan → Yellow → Red (most common for depth)
+            # cv2.COLORMAP_WINTER - Blue to green gradient
+            # cv2.COLORMAP_RAINBOW - Full spectrum colors
+            # cv2.COLORMAP_OCEAN - Dark blue to cyan
+            # cv2.COLORMAP_SUMMER - Green to yellow gradient
+            # cv2.COLORMAP_SPRING - Magenta to yellow gradient
+            # cv2.COLORMAP_COOL - Cyan to magenta gradient
+            # cv2.COLORMAP_HSV - HSV color wheel
+            # cv2.COLORMAP_PINK - Pink gradient
+            # cv2.COLORMAP_HOT - Black → Red → Yellow → White
+            # cv2.COLORMAP_CIVIDIS - Blue → Yellow (colorblind-friendly) 
+            # cv2.COLORMAP_VIRIDIS - Purple → Blue → Green → Yellow
+            # cv2.COLORMAP_PLASMA - Purple → Pink → Yellow
+            # cv2.COLORMAP_MAGMA - Black → Purple → Pink → Yellow
+            # cv2.COLORMAP_PARULA - MATLAB's default colormap
+
+            # Lowkey fire color maps:
+            # cv2.COLORMAP_TURBO - Google's Turbo colormap (improved JET)
+            # cv2.COLORMAP_TWILIGHT - Pink → White → Cyan
+            # cv2.COLORMAP_TWILIGHT_SHIFTED - Shifted version of twilight
+            # cv2.COLORMAP_INFERNO - Black → Purple → Red → Yellow
+
+            # depth_colored = cv2.applyColorMap((depth_normalized * 255).astype(np.uint8), cv2.COLORMAP_HSV)
+            # depth_colored = cv2.applyColorMap((depth_normalized * 255).astype(np.uint8), cv2.COLORMAP_TURBO)
+            depth_colored = cv2.applyColorMap((depth_normalized * 255).astype(np.uint8), cv2.COLORMAP_TURBO)
+            colored_msg = self.bridge.cv2_to_imgmsg(depth_colored, encoding="bgr8")
+            colored_msg.header = msg.header
+            colored_msg.header.frame_id = "camera_depth_anything_colored_frame"
+            self.colored_depth_publisher.publish(colored_msg)
                 
         except Exception as e:
             self.get_logger().error(f"Error processing RGB image: {str(e)}")
