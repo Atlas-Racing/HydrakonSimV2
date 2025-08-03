@@ -1,0 +1,28 @@
+# Build artifacts
+build/
+install/
+log/
+
+# Python specific
+*.pyc
+__pycache__/
+
+# C++ specific
+*.o
+*.so
+*.a
+*.lo
+*.la
+*.libs
+*.bin
+*.out
+*.d
+
+# Editor/IDE specific files
+.vscode/
+.idea/
+*.swp
+*~
+# Other common files to ignore
+.DS_Store
+Thumbs.db
