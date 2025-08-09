@@ -17,7 +17,7 @@ class DepthAnythingProcessor(Node):
 
         self.rgb_subscriber = self.create_subscription(
             Image,
-            '/camera',
+            '/camera/raw',
             self.rgb_callback,
             10
         )

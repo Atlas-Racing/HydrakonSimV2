@@ -27,9 +27,8 @@ class RGBCameraSpawnerNode(Node):
         self.camera = None
         self.world = None
         self.vehicle = None
-        
-        # ROS publisher and CV bridge
-        self.rgb_publisher = self.create_publisher(Image, '/camera', 10)
+
+        self.rgb_publisher = self.create_publisher(Image, '/camera/raw', 10)
         self.bridge = CvBridge()
         
         self.setup()
