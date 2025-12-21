@@ -15,7 +15,7 @@ class ConeDetectorPT(Node):
         self.bridge = CvBridge()
         
         # Declare parameters
-        self.declare_parameter('model_path', '/home/aditya/HydrakonSimV2/src/hydrakon_camera/hydrakon_camera/best.pt')
+        self.declare_parameter('model_path', '/home/aditya/HydrakonSimV2/src/hydrakon_camera/hydrakon_camera/models/best.onnx')
         self.declare_parameter('benchmark', False)
         
         # Get parameter values
