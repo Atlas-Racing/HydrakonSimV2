@@ -23,14 +23,29 @@ jobs:
         with:
           ros-distro: jazzy
 
+      - name: Cache Pip Packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            venv
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install Python Dependencies
         run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          # Install core dependencies
-          pip install "numpy<2" torch torchvision ultralytics opencv-python onnx onnxruntime-gpu pygame
-          # Install Carla client for build compatibility (not for running the sim)
-          pip install carla==0.9.16
+          if [ ! -d "venv" ]; then
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install "numpy<2" 
+            pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+            pip install onnxruntime  # CPU version (onnxruntime-gpu is huge)
+            pip install ultralytics opencv-python onnx pygame carla==0.9.16
+          else
+            source venv/bin/activate
+            echo "Using cached venv"
+          fi
 
       - name: Colcon Build
         run: |
