@@ -14,17 +14,31 @@ class ConeDetectorPT(Node):
         super().__init__('cone_detector_pt_node')
         self.bridge = CvBridge()
         
-        model_path = '/home/aditya/HydrakonSimV2/src/hydrakon_camera/hydrakon_camera/best.pt'
+        # Declare parameters
+        self.declare_parameter('model_path', '/home/aditya/HydrakonSimV2/src/hydrakon_camera/hydrakon_camera/best.pt')
+        self.declare_parameter('benchmark', False)
         
-        self.model = YOLO(model_path, verbose=False)
+        # Get parameter values
+        model_path = self.get_parameter('model_path').get_parameter_value().string_value
+        self.benchmark_mode = self.get_parameter('benchmark').get_parameter_value().bool_value
+        
+        self.get_logger().info(f"Loading model from: {model_path}")
+        
+        try:
+            self.model = YOLO(model_path, verbose=False)
+        except Exception as e:
+            self.get_logger().error(f"Failed to load model: {e}")
+            raise e
         
         self.class_names = self.extract_class_names()
-        
         self.class_colors = self.generate_class_colors()
         
-        self.get_logger().info(f"PyTorch model loaded: {model_path}")
+        self.get_logger().info(f"Model loaded successfully. Type: {'ONNX' if model_path.endswith('.onnx') else 'PyTorch'}")
         self.get_logger().info(f"Detected classes: {self.class_names}")
         self.get_logger().info(f"Number of classes: {len(self.class_names)}")
+        
+        if self.benchmark_mode:
+            self.get_logger().info("Benchmark mode ENABLED")
         
         self.conf_threshold = 0.01 
         self.iou_threshold = 0.5
@@ -34,7 +48,7 @@ class ConeDetectorPT(Node):
         self.image_pub = self.create_publisher(
             Image, '/camera/cone_detections_image', 10)
         
-        self.get_logger().info("Cone detector (PyTorch) node initialized")
+        self.get_logger().info("Cone detector node initialized")
 
 
     def extract_class_names(self):
@@ -125,8 +139,18 @@ class ConeDetectorPT(Node):
     def image_callback(self, msg):
         try:
             frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            
+            start_time = 0
+            if self.benchmark_mode:
+                start_time = cv2.getTickCount()
+
             results = self.model(frame, conf=self.conf_threshold, iou=self.iou_threshold, verbose=False)
             
+            if self.benchmark_mode:
+                end_time = cv2.getTickCount()
+                inference_time_ms = (end_time - start_time) / cv2.getTickFrequency() * 1000
+                self.get_logger().info(f"Inference Time: {inference_time_ms:.2f} ms (FPS: {1000/inference_time_ms:.1f})")
+
             annotated_frame = frame.copy()
             
             for result in results:

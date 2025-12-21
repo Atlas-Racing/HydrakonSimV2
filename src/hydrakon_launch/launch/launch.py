@@ -1,11 +1,26 @@
 #!/usr/bin/env python3
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import TimerAction
-
+from launch.actions import TimerAction, DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
+    model_path_arg = DeclareLaunchArgument(
+        'model_path',
+        default_value='/home/aditya/HydrakonSimV2/src/hydrakon_camera/hydrakon_camera/best.pt',
+        description='Path to the YOLO model (.pt or .onnx)'
+    )
+
+    benchmark_arg = DeclareLaunchArgument(
+        'benchmark',
+        default_value='False',
+        description='Enable benchmarking mode for inference timing'
+    )
+
     return LaunchDescription([
+        model_path_arg,
+        benchmark_arg,
+
         Node(
             package='hydrakon_manager',
             executable='vehicle_spawner',
@@ -69,6 +84,10 @@ def generate_launch_description():
                     executable='cone_detector',
                     name='cone_detections',
                     output='screen',
+                    parameters=[
+                        {'model_path': LaunchConfiguration('model_path')},
+                        {'benchmark': LaunchConfiguration('benchmark')}
+                    ]
                 )
             ]
         ),
