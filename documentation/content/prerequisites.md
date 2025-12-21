@@ -2,8 +2,6 @@
 title: Prerequisites
 ---
 
-# Prerequisites
-
 Before you begin, ensure you have the following software installed and configured:
 
 *   **Operating System:** Ubuntu 24.04 (Noble Numbat)

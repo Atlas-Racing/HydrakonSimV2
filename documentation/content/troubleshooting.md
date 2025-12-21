@@ -2,8 +2,6 @@
 title: Troubleshooting
 ---
 
-# Troubleshooting
-
 Common issues and their solutions.
 
 ### `ModuleNotFoundError: No module named 'carla'`

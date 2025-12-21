@@ -11,7 +11,7 @@ Full documentation has been moved to the `documentation/` folder.
 *   [Getting Started](documentation/content/getting-started.md)
 *   [Troubleshooting](documentation/content/troubleshooting.md)
 
-To view the documentation as a website (using Quartz):
+To view the documentation as a website, visit [Hydrakon Documentation](https://hydrakon.pages.dev/):
 
 ```bash
 cd documentation

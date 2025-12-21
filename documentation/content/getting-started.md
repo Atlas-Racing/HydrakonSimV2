@@ -2,8 +2,6 @@
 title: Getting Started
 ---
 
-# Getting Started
-
 ## Building the Workspace
 
 Use `colcon` to build the ROS 2 workspace. We use `--symlink-install` to allow Python script changes to take effect without rebuilding (mostly).

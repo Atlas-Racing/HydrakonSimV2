@@ -2,8 +2,6 @@
 title: Installation Guide
 ---
 
-# Installation Guide
-
 Follow these steps to set up the HydrakonSimV2 environment.
 
 ## 1. Cloning the Repository
