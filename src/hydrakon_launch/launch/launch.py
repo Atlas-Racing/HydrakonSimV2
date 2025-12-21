@@ -7,7 +7,7 @@ from launch.substitutions import LaunchConfiguration
 def generate_launch_description():
     model_path_arg = DeclareLaunchArgument(
         'model_path',
-        default_value='/home/aditya/HydrakonSimV2/src/hydrakon_camera/hydrakon_camera/best.pt',
+        default_value='/home/aditya/HydrakonSimV2/src/hydrakon_camera/hydrakon_camera/models/best.onnx',
         description='Path to the YOLO model (.pt or .onnx)'
     )
 
@@ -17,15 +17,36 @@ def generate_launch_description():
         description='Enable benchmarking mode for inference timing'
     )
 
+    manual_control_arg = DeclareLaunchArgument(
+        'manual_control',
+        default_value='False',
+        description='Enable manual control window (Pygame)'
+    )
+    
+    from launch.conditions import IfCondition
+
     return LaunchDescription([
         model_path_arg,
         benchmark_arg,
+        manual_control_arg,
 
         Node(
             package='hydrakon_manager',
             executable='vehicle_spawner',
             name='carla_vehicle_spawner',
             output='screen',
+            parameters=[
+                {'carla_host': 'localhost'},
+                {'carla_port': 2000}
+            ]
+        ),
+
+        Node(
+            package='hydrakon_manager',
+            executable='manual_control',
+            name='manual_control',
+            output='screen',
+            condition=IfCondition(LaunchConfiguration('manual_control')),
             parameters=[
                 {'carla_host': 'localhost'},
                 {'carla_port': 2000}

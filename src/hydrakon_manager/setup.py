@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'vehicle_spawner = hydrakon_manager.vehicle_node:main',
+            'manual_control = hydrakon_manager.manual_control:main',
         ],
     },
 )

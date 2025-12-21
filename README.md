@@ -55,11 +55,22 @@ source install/setup.bash
 # 3. Export PYTHONPATH (Crucial for finding 'carla')
 export PYTHONPATH=$PYTHONPATH:$(pwd)/venv/lib/python3.12/site-packages
 
-# 4. Launch (with optional parameters for cone_detector)
-ros2 launch hydrakon_launch launch.py [model_path:=/path/to/model.pt_or_onnx] [benchmark:=True/False]
+# 4. Launch (with optional parameters)
+ros2 launch hydrakon_launch launch.py [model_path:=...] [benchmark:=True/False] [manual_control:=True/False]
 ```
 
-### Examples for `cone_detector`
+### Launch Arguments
+*   `model_path`: Path to the YOLO model (default: `src/.../models/best.onnx`).
+*   `benchmark`: Enable inference timing logging (default: `False`).
+*   `manual_control`: Enable Pygame window for driving the vehicle (default: `False`).
+
+### Examples
+
+**Run with Manual Control:**
+```bash
+ros2 launch hydrakon_launch launch.py manual_control:=True
+```
+Use **WASD** to drive, **Space** for handbrake, **Q** to toggle reverse.
 
 **Run with PyTorch model (default) and no benchmarking:**
 ```bash
