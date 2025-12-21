@@ -48,18 +48,18 @@ def generate_launch_description():
             ]
         ),
 
-        TimerAction(
-            period=1.0,
-            actions=[
-                Node(
-                    package='hydrakon_camera',
-                    executable='depth_anything_processor',
-                    name='depth_anything_processor',
-                    output='screen',
-                    cwd='/home/aditya/HydrakonSimV2/src/hydrakon_camera/Depth-Anything-V2',
-                )
-            ]
-        ),
+        # TimerAction(
+        #     period=1.0,
+        #     actions=[
+        #         Node(
+        #             package='hydrakon_camera',
+        #             executable='depth_anything_processor',
+        #             name='depth_anything_processor',
+        #             output='screen',
+        #             cwd='/home/aditya/HydrakonSimV2/src/hydrakon_camera/Depth-Anything-V2',
+        #         )
+        #     ]
+        # ),
 
         TimerAction(
             period=2.0,
@@ -73,29 +73,29 @@ def generate_launch_description():
             ]
         ),
 
-        TimerAction(
-            period=3.0,
-            actions=[
-                Node(
-                    package='rosapi',
-                    executable='rosapi_node',
-                    name='rosapi',
-                    output='screen'
-                ),
-                Node(
-                    package='rosbridge_server',
-                    executable='rosbridge_websocket',
-                    name='rosbridge_websocket',
-                    output='screen',
-                    parameters=[
-                        {'port': 9090},
-                        {'address': '0.0.0.0'},
-                        {'authenticate': False},
-                        {'fragment_timeout': 600},
-                        {'delay_between_messages': 0}
-                    ]
-                )
-            ]
-        ),
+        # TimerAction(
+        #     period=3.0,
+        #     actions=[
+        #         Node(
+        #             package='rosapi',
+        #             executable='rosapi_node',
+        #             name='rosapi',
+        #             output='screen'
+        #         ),
+        #         Node(
+        #             package='rosbridge_server',
+        #             executable='rosbridge_websocket',
+        #             name='rosbridge_websocket',
+        #             output='screen',
+        #             parameters=[
+        #                 {'port': 9090},
+        #                 {'address': '0.0.0.0'},
+        #                 {'authenticate': False},
+        #                 {'fragment_timeout': 600},
+        #                 {'delay_between_messages': 0}
+        #             ]
+        #         )
+        #     ]
+        # ),
         
     ])

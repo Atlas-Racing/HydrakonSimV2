@@ -14,26 +14,21 @@ class DepthAnythingProcessor(Node):
     def __init__(self):
         super().__init__('depth_anything_processor')
         self.bridge = CvBridge()
+        
+        # Add local Depth-Anything-V2 folder to path
+        import sys
+        import os
+        
+        # Hardcode path to src directory for development since folder isn't installed
+        self.da_path = '/home/aditya/HydrakonSimV2/src/hydrakon_camera/Depth-Anything-V2'
+        
+        self.get_logger().info(f"DEBUG: Setting DA path to: {self.da_path}")
+        self.get_logger().info(f"DEBUG: Path exists? {os.path.exists(self.da_path)}")
 
-        self.rgb_subscriber = self.create_subscription(
-            Image,
-            '/camera/raw',
-            self.rgb_callback,
-            10
-        )
-
-        self.depth_publisher = self.create_publisher(
-            Image,
-            '/camera/depthanything',
-            10
-        )
-
-        self.colored_depth_publisher = self.create_publisher(
-            Image,
-            '/camera/depthanything_colored',
-            10
-        )
-
+        if self.da_path not in sys.path:
+            sys.path.append(self.da_path)
+            self.get_logger().info(f"DEBUG: Added {self.da_path} to sys.path")
+            
         self.setup_depth_model()
         
         self.get_logger().info("Depth Anything V2 processor initialized")
@@ -57,7 +52,9 @@ class DepthAnythingProcessor(Node):
                 encoder = 'vits'
                 
                 self.model = DepthAnythingV2(**model_configs[encoder])
-                checkpoint_path = f'checkpoints/depth_anything_v2_{encoder}.pth'
+                
+                # Use absolute path for checkpoint based on da_path
+                checkpoint_path = os.path.join(self.da_path, 'checkpoints', f'depth_anything_v2_{encoder}.pth')
                 
                 if os.path.exists(checkpoint_path):
                     self.model.load_state_dict(torch.load(checkpoint_path, map_location='cpu'))

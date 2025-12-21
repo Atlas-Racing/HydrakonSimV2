@@ -16,7 +16,7 @@ class ConeDetectorPT(Node):
         
         model_path = '/home/aditya/HydrakonSimV2/src/hydrakon_camera/hydrakon_camera/best.pt'
         
-        self.model = YOLO(model_path)
+        self.model = YOLO(model_path, verbose=False)
         
         self.class_names = self.extract_class_names()
         
@@ -125,7 +125,7 @@ class ConeDetectorPT(Node):
     def image_callback(self, msg):
         try:
             frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-            results = self.model(frame, conf=self.conf_threshold, iou=self.iou_threshold)
+            results = self.model(frame, conf=self.conf_threshold, iou=self.iou_threshold, verbose=False)
             
             annotated_frame = frame.copy()
             
@@ -145,7 +145,7 @@ class ConeDetectorPT(Node):
                             class_name = self.class_names.get(class_id, f"class_{class_id}")
                         else:
                             class_name = self.class_names[class_id] if class_id < len(self.class_names) else f"class_{class_id}"
-                        self.get_logger().info(f"Raw detection: Class {class_id} ({class_name}), Confidence: {confidence:.3f}")
+                        # self.get_logger().info(f"Raw detection: Class {class_id} ({class_name}), Confidence: {confidence:.3f}")
                         color = self.class_colors.get(class_name, (0, 255, 0))
                         label = f"{class_name} {confidence:.2f}"
                         cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), color, 2)
@@ -157,9 +157,9 @@ class ConeDetectorPT(Node):
                         cv2.putText(annotated_frame, label, (x1, y1 - 5),
                                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                         
-                        self.get_logger().info(
-                            f"Detected: {class_name} {confidence:.2f} at [{x1}, {y1}, {x2}, {y2}]"
-                        )
+                        # self.get_logger().info(
+                        #     f"Detected: {class_name} {confidence:.2f} at [{x1}, {y1}, {x2}, {y2}]"
+                        # )
             
             annotated_msg = self.bridge.cv2_to_imgmsg(annotated_frame, encoding='bgr8')
             annotated_msg.header = msg.header
