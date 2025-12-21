@@ -1,0 +1,46 @@
+name: ROS 2 Colcon Build CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup ROS 2 Jazzy
+        uses: ros-tooling/setup-ros@v0.7
+        with:
+          ros-distro: jazzy
+
+      - name: Install Python Dependencies
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          # Install core dependencies
+          pip install "numpy<2" torch torchvision ultralytics opencv-python onnx onnxruntime-gpu pygame
+          # Install Carla client for build compatibility (not for running the sim)
+          pip install carla==0.9.16
+
+      - name: Colcon Build
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source venv/bin/activate
+          colcon build --symlink-install
+        working-directory: ${{ github.workspace }}
+
+      # - name: Run Linters
+      #   run: |
+      #     source /opt/ros/jazzy/setup.bash
+      #     source install/setup.bash
+      #     colcon test --packages-select hydrakon_camera --ament-flake8 --ament-pep257
