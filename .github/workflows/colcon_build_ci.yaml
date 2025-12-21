@@ -35,7 +35,7 @@ jobs:
           path: |
             ~/.cache/pip
             venv
-          key: ${{ runner.os }}-pip-cpu-${{ hashFiles('**/setup.py') }}
+          key: ${{ runner.os }}-pip-cpu-${{ hashFiles('**/package.xml') }}
           restore-keys: |
             ${{ runner.os }}-pip-cpu-
 
@@ -43,10 +43,11 @@ jobs:
         run: |
           if [ ! -d "venv" ]; then
             python3 -m venv venv
+
+            touch venv/COLCON_IGNORE
+            
             . venv/bin/activate
-            
-            pip install --upgrade pip
-            
+                        
             pip install "numpy<2"
             pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
             pip install onnxruntime
