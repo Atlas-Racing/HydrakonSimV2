@@ -35,7 +35,7 @@ jobs:
           path: |
             ~/.cache/pip
             venv
-          key: ${{ runner.os }}-pip-cpu-${{ hashFiles('**/package.xml') }}
+          key: ${{ runner.os }}-pip-cpu-v1
           restore-keys: |
             ${{ runner.os }}-pip-cpu-
 
