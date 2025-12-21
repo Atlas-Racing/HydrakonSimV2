@@ -91,6 +91,18 @@ def generate_launch_description():
                 )
             ]
         ),
+        
+        TimerAction(
+            period=3.0,
+            actions=[
+                Node(
+                    package='hydrakon_camera',
+                    executable='cone_locator',
+                    name='cone_locator',
+                    output='screen',
+                )
+            ]
+        ),
 
         # TimerAction(
         #     period=3.0,

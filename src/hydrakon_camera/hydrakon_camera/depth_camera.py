@@ -129,9 +129,12 @@ class DepthCameraSpawnerNode(Node):
             array = array[:, :, :3]
             array = array[:, :, ::-1]  # Convert BGR to RGB
             
-            depth_array = array[:, :, 0].astype(np.float32)
+            R = array[:, :, 0].astype(np.float32)
+            G = array[:, :, 1].astype(np.float32)
+            B = array[:, :, 2].astype(np.float32)
             
-            depth_array = depth_array * 1000.0 / 255.0
+            depth_normalized = (R + G * 256.0 + B * 256.0 * 256.0) / (256.0 * 256.0 * 256.0 - 1.0)
+            depth_array = depth_normalized * 1000.0
             
             ros_image = self.bridge.cv2_to_imgmsg(depth_array, encoding="32FC1")
             ros_image.header.stamp = self.get_clock().now().to_msg()

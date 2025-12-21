@@ -24,6 +24,7 @@ setup(
             'rgb_camera_spawner = hydrakon_camera.camera:main',
             'depth_anything_processor = hydrakon_camera.depth_anything:main',
             'cone_detector = hydrakon_camera.YOLO:main',
+            'cone_locator = hydrakon_camera.cone_locator:main',
         ],
     },
 )

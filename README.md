@@ -75,7 +75,28 @@ source venv/bin/activate && source install/setup.bash && export PYTHONPATH=$PYTH
 ```bash
 source venv/bin/activate && source install/setup.bash && export PYTHONPATH=$PYTHONPATH:$(pwd)/venv/lib/python3.12/site-packages && ros2 launch hydrakon_launch launch.py model_path:=/home/aditya/HydrakonSimV2/src/hydrakon_camera/hydrakon_camera/best.pt benchmark:=True
 ```
-...
+
+## Visualization in RViz
+
+The system publishes 3D markers for detected cones, allowing you to visualize their positions in 3D space.
+
+1.  **Start the Simulation:** Run one of the launch commands above.
+2.  **Open RViz2:**
+    ```bash
+    rviz2
+    ```
+3.  **Configure RViz:**
+    *   **Fixed Frame:** Set to `cone_frame` (Type this in manually).
+    *   **Add Display:** Click **Add** -> Select **MarkerArray** -> Set Topic to `/camera/cone_markers`.
+    *   **Add Display (Optional):** Click **Add** -> Select **Image** -> Set Topic to `/camera/cone_detections_image` to see the 2D detections.
+
+The cones will appear as cylinders on the grid (XY plane), color-coded by class:
+*   **Yellow:** Yellow Cone
+*   **Blue:** Blue Cone
+*   **Orange:** Orange Cone / Large Orange Cone
+*   **White:** Unknown
+
+## Troubleshooting
 
 ### `ModuleNotFoundError: No module named 'carla'`
 *   **Cause:** The `PYTHONPATH` is not set correctly, or the `.so` file in `site-packages` was not renamed.

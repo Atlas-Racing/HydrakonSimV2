@@ -6,6 +6,8 @@ import cv2
 import numpy as np
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
+from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose, BoundingBox2D
+from geometry_msgs.msg import Pose2D
 import torch
 from ultralytics import YOLO
 
@@ -14,7 +16,6 @@ class ConeDetectorPT(Node):
         super().__init__('cone_detector_pt_node')
         self.bridge = CvBridge()
         
-        # Declare parameters
         self.declare_parameter('model_path', '/home/aditya/HydrakonSimV2/src/hydrakon_camera/hydrakon_camera/models/best.onnx')
         self.declare_parameter('benchmark', False)
         
@@ -25,7 +26,7 @@ class ConeDetectorPT(Node):
         self.get_logger().info(f"Loading model from: {model_path}")
         
         try:
-            self.model = YOLO(model_path, verbose=False)
+            self.model = YOLO(model_path, verbose=False, task='detect')
         except Exception as e:
             self.get_logger().error(f"Failed to load model: {e}")
             raise e
@@ -40,13 +41,15 @@ class ConeDetectorPT(Node):
         if self.benchmark_mode:
             self.get_logger().info("Benchmark mode ENABLED")
         
-        self.conf_threshold = 0.01 
+        self.conf_threshold = 0.25 
         self.iou_threshold = 0.5
         
         self.image_sub = self.create_subscription(
             Image, '/camera/raw', self.image_callback, 10)
         self.image_pub = self.create_publisher(
             Image, '/camera/cone_detections_image', 10)
+        self.detections_pub = self.create_publisher(
+            Detection2DArray, '/camera/cone_detections', 10)
         
         self.get_logger().info("Cone detector node initialized")
 
@@ -153,6 +156,9 @@ class ConeDetectorPT(Node):
 
             annotated_frame = frame.copy()
             
+            detections_msg = Detection2DArray()
+            detections_msg.header = msg.header
+            
             for result in results:
                 boxes = result.boxes
                 
@@ -165,6 +171,26 @@ class ConeDetectorPT(Node):
                         x1, y1, x2, y2 = xyxy[i].astype(int)
                         confidence = conf[i]
                         class_id = int(cls[i])
+                        
+                        # Create Detection2D message
+                        detection = Detection2D()
+                        detection.header = msg.header
+                        
+                        # Define Bounding Box (Vision msgs uses center -> position -> x, y)
+                        detection.bbox.center.position.x = float(x1 + x2) / 2.0
+                        detection.bbox.center.position.y = float(y1 + y2) / 2.0
+                        detection.bbox.center.theta = 0.0
+                        detection.bbox.size_x = float(x2 - x1)
+                        detection.bbox.size_y = float(y2 - y1)
+                        
+                        # Define Hypothesis
+                        hypothesis = ObjectHypothesisWithPose()
+                        hypothesis.hypothesis.class_id = str(class_id)
+                        hypothesis.hypothesis.score = float(confidence)
+                        detection.results.append(hypothesis)
+                        
+                        detections_msg.detections.append(detection)
+
                         if isinstance(self.class_names, dict):
                             class_name = self.class_names.get(class_id, f"class_{class_id}")
                         else:
@@ -184,6 +210,8 @@ class ConeDetectorPT(Node):
                         # self.get_logger().info(
                         #     f"Detected: {class_name} {confidence:.2f} at [{x1}, {y1}, {x2}, {y2}]"
                         # )
+            
+            self.detections_pub.publish(detections_msg)
             
             annotated_msg = self.bridge.cv2_to_imgmsg(annotated_frame, encoding='bgr8')
             annotated_msg.header = msg.header
