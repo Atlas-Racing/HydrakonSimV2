@@ -129,6 +129,31 @@ def generate_launch_description():
         #     period=3.0,
         #     actions=[
         #         Node(
+        #             package='greenwave_monitor',
+        #             executable='greenwave_monitor',
+        #             name='greenwave_monitor',
+        #             output='log',
+        #         )
+        #     ]
+        # ),
+        
+        TimerAction(
+            period=5.0,
+            actions=[
+                Node(
+                    package='r2s_gw',
+                    executable='r2s_gw',
+                    name='r2s_gw',
+                    output='screen',
+                    prefix='xterm -e',
+                )
+            ]
+        ),
+
+        # TimerAction(
+        #     period=3.0,
+        #     actions=[
+        #         Node(
         #             package='rosapi',
         #             executable='rosapi_node',
         #             name='rosapi',
