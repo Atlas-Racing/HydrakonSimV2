@@ -35,9 +35,9 @@ jobs:
           path: |
             ~/.cache/pip
             venv
-          key: ${{ runner.os }}-pip-cpu-v1
+          key: ${{ runner.os }}-pip-cpu-v2
           restore-keys: |
-            ${{ runner.os }}-pip-cpu-
+            ${{ runner.os }}-pip-cpu-v2-
 
       - name: Install Python Dependencies
         run: |
@@ -47,7 +47,8 @@ jobs:
             touch venv/COLCON_IGNORE
             
             . venv/bin/activate
-                        
+            
+            pip install empy lark             
             pip install "numpy<2"
             pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
             pip install onnxruntime
