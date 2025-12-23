@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="hydrakon_vehicle">
+
+  <xacro:property name="mesh_x_offset" value="0.0"/>
+  <xacro:property name="mesh_y_offset" value="0.0"/>
+  <xacro:property name="mesh_z_offset" value="0.0"/>
+  
+  <xacro:property name="mesh_roll" value="0.0"/>
+  <xacro:property name="mesh_pitch" value="0.0"/>
+  <xacro:property name="mesh_yaw" value="0.0"/>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="${mesh_x_offset} ${mesh_y_offset} ${mesh_z_offset}" 
+              rpy="${mesh_roll} ${mesh_pitch} ${mesh_yaw}"/>
+      <geometry>
+        <mesh filename="package://hydrakon_description/meshes/ads_dv.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="team_color">
+        <color rgba="0.0 0.4 0.8 1.0"/> </material>
+    </visual>
+    
+    <collision>
+      <origin xyz="${1.53/2} 0 0.3" rpy="0 0 0"/> <geometry>
+        <box size="2.5 1.2 0.6"/> </geometry>
+    </collision>
+  </link>
+
+  <link name="base_footprint"/>
+  
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="base_footprint"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+</robot>
