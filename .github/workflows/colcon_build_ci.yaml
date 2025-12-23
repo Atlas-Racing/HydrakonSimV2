@@ -69,4 +69,4 @@ jobs:
           
           . venv/bin/activate
           
-          colcon build --symlink-install
+          colcon build --symlink-install --packages-ignore hydrakon_description
