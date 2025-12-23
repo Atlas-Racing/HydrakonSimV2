@@ -11,6 +11,7 @@ HydrakonSim V2 that builds upon HydrakonSimV1. Being Developed for HydrakonV2 fo
 *   [Prerequisites](prerequisites.md) - System requirements and software.
 *   [Installation Guide](installation.md) - Step-by-step setup instructions.
 *   [Getting Started](getting-started.md) - Building, launching, and visualization.
+*   [Launch Files](launch/index) - Documentation for launch files and nodes.
 *   [Troubleshooting](troubleshooting.md) - Common errors and fixes.
 
 ## Hydrakon V2

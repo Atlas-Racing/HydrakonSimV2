@@ -39,7 +39,22 @@ export const defaultContentPageLayout: PageLayout = {
         { Component: Component.ReaderMode() },
       ],
     }),
-    Component.Explorer(),
+    Component.Explorer({
+      sortFn: (a, b) => {
+        if ((!a.isFolder && !b.isFolder) || (a.isFolder && b.isFolder)) {
+          return a.displayName.localeCompare(b.displayName, undefined, {
+            numeric: true,
+            sensitivity: "base",
+          })
+        }
+
+        if (!a.isFolder && b.isFolder) {
+          return -1
+        } else {
+          return 1
+        }
+      },
+    }),
   ],
   right: [
     Component.Graph(),
@@ -63,7 +78,22 @@ export const defaultListPageLayout: PageLayout = {
         { Component: Component.Darkmode() },
       ],
     }),
-    Component.Explorer(),
+    Component.Explorer({
+      sortFn: (a, b) => {
+        if ((!a.isFolder && !b.isFolder) || (a.isFolder && b.isFolder)) {
+          return a.displayName.localeCompare(b.displayName, undefined, {
+            numeric: true,
+            sensitivity: "base",
+          })
+        }
+
+        if (!a.isFolder && b.isFolder) {
+          return -1
+        } else {
+          return 1
+        }
+      },
+    }),
   ],
   right: [],
 }

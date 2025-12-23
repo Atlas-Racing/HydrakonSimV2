@@ -1,5 +1,5 @@
 ---
-title: Prerequisites
+title: 1. Prerequisites
 ---
 
 Before you begin, ensure you have the following software installed and configured:

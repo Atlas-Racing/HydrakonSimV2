@@ -1,5 +1,5 @@
 ---
-title: Troubleshooting
+title: 4. Troubleshooting
 ---
 
 Common issues and their solutions.
