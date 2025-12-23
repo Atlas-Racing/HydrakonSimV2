@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
+import os
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import TimerAction, DeclareLaunchArgument
+from launch.actions import TimerAction, DeclareLaunchArgument, IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     model_path_arg = DeclareLaunchArgument(
@@ -24,11 +27,27 @@ def generate_launch_description():
     )
     
     from launch.conditions import IfCondition
+    
+    hydrakon_description_dir = get_package_share_directory('hydrakon_description')
+    hydrakon_description_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(hydrakon_description_dir, 'launch', 'display.launch.py')
+        )
+    )
 
     return LaunchDescription([
         model_path_arg,
         benchmark_arg,
         manual_control_arg,
+        
+        hydrakon_description_launch,
+
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='base_link_to_cone_frame',
+            arguments=['0', '0', '0', '-1.57079632679', '0', '0', 'base_link', 'cone_frame']
+        ),
 
         Node(
             package='hydrakon_manager',

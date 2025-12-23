@@ -2,7 +2,7 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="hydrakon_vehicle">
 
   <xacro:property name="mesh_x_offset" value="0.0"/>
-  <xacro:property name="mesh_y_offset" value="0.0"/>
+  <xacro:property name="mesh_y_offset" value="-3.0"/>
   <xacro:property name="mesh_z_offset" value="0.0"/>
   
   <xacro:property name="mesh_roll" value="0.0"/>
@@ -14,7 +14,7 @@
       <origin xyz="${mesh_x_offset} ${mesh_y_offset} ${mesh_z_offset}" 
               rpy="${mesh_roll} ${mesh_pitch} ${mesh_yaw}"/>
       <geometry>
-        <mesh filename="package://hydrakon_description/meshes/ads_dv.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://hydrakon_description/meshes/ads_dv.stl" scale="0.0019 0.0019 0.0019"/>
       </geometry>
       <material name="team_color">
         <color rgba="0.0 0.4 0.8 1.0"/> </material>
