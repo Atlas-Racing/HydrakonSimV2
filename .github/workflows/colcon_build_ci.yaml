@@ -42,13 +42,12 @@ jobs:
       - name: Install Python Dependencies
         run: |
           if [ ! -d "venv" ]; then
-            python3 -m venv venv
+            python3 -m venv venv --system-site-packages
 
             touch venv/COLCON_IGNORE
             
             . venv/bin/activate
-            
-            pip install empy lark             
+                        
             pip install "numpy<2"
             pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
             pip install onnxruntime
