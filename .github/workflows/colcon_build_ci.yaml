@@ -4,9 +4,15 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - '.github/workflows/colcon_build_ci.yaml'
   pull_request:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - '.github/workflows/colcon_build_ci.yaml'
 
 jobs:
   build:
