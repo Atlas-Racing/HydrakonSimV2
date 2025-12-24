@@ -70,7 +70,7 @@ class LidarNode(Node):
             lidar_bp.set_attribute('upper_fov', '15')
             lidar_bp.set_attribute('lower_fov', '-25')
             
-            lidar_transform = carla.Transform(carla.Location(x=1.5, z=2.2))
+            lidar_transform = carla.Transform(carla.Location(x=0.6, z=1.0))
             self.lidar = self.world.spawn_actor(lidar_bp, lidar_transform, attach_to=self.vehicle)
             
             self.lidar.listen(lambda data: self.lidar_callback(data))
