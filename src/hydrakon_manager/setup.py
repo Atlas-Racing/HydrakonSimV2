@@ -25,6 +25,8 @@ setup(
             'carla_bridge = hydrakon_manager.carla_to_ros_bridge:main',
             'ins_node = hydrakon_manager.ins_node:main',
             'lidar_node = hydrakon_manager.lidar_node:main',
+            'pure_pursuit = hydrakon_manager.pure_pursuit:main',
+            'cone_fusion = hydrakon_manager.cone_fusion_node:main',
         ],
     },
 )
