@@ -4,7 +4,7 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import JointState, Imu
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import TransformStamped, Twist
 from std_msgs.msg import Header
 from tf2_ros import TransformBroadcaster
 import carla
@@ -29,12 +29,11 @@ class CarlaToRosBridge(Node):
         self.odom_pub = self.create_publisher(Odometry, '/odom', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
 
-        # Subscribe to INS/IMU
         self.imu_sub = self.create_subscription(Imu, '/imu', self.imu_callback, 10)
-        self.latest_angular_vel = None # Store (x, y, z) tuple
-        self.latest_orientation = None # Store (x, y, z, w) tuple
-        self.latest_orientation_covariance = [0.0] * 9 # Store 3x3 covariance
-        self.latest_angular_vel_covariance = [0.0] * 9 # Store 3x3 covariance
+        self.latest_angular_vel = None
+        self.latest_orientation = None
+        self.latest_orientation_covariance = [0.0] * 9
+        self.latest_angular_vel_covariance = [0.0] * 9
 
         self.client = None
         self.world = None
@@ -45,7 +44,7 @@ class CarlaToRosBridge(Node):
         
         self.connect_carla()
         
-        self.timer = self.create_timer(0.02, self.timer_callback) # 50Hz update
+        self.timer = self.create_timer(0.02, self.timer_callback)
 
         self.get_logger().info("Carla-to-ROS Bridge Node Started.")
 
@@ -75,8 +74,6 @@ class CarlaToRosBridge(Node):
 
     def find_vehicle(self):
         actors = self.world.get_actors()
-        # Simple search: find first vehicle. 
-        # In a complex sim, you'd filter by role_name attribute if set.
         vehicles = actors.filter('vehicle.*')
         
         if len(vehicles) > 0:
@@ -87,21 +84,15 @@ class CarlaToRosBridge(Node):
             self.vehicle = None
 
     def carla_transform_to_ros_pose(self, transform):
-        # Carla (Left-Handed: X-fwd, Y-right, Z-up) -> ROS (Right-Handed: X-fwd, Y-left, Z-up)
-        # We need to invert Y for location and rotation (pitch and yaw)
-        
+
         x = transform.location.x
-        y = -transform.location.y # Invert Y
+        y = -transform.location.y
         z = transform.location.z
         
-        # Carla roll/pitch/yaw are in degrees. Convert to radians.
-        # Pitch and Yaw are inverted for ROS (right-handed system)
         roll = math.radians(transform.rotation.roll)
         pitch = math.radians(-transform.rotation.pitch) 
         yaw = math.radians(-transform.rotation.yaw)     
         
-        # Convert Euler to Quaternion (using ROS conventions)
-        # This conversion ensures correct quaternion from ROS Euler
         cy = math.cos(yaw * 0.5)
         sy = math.sin(yaw * 0.5)
         cp = math.cos(pitch * 0.5)
@@ -122,15 +113,12 @@ class CarlaToRosBridge(Node):
             return
 
         try:
-            # Gather Data from CARLA
             control = self.vehicle.get_control()
-            velocity = self.vehicle.get_velocity() # Global frame velocity
-            transform = self.vehicle.get_transform() # Global frame transform
+            velocity = self.vehicle.get_velocity()
+            transform = self.vehicle.get_transform()
             
-            # --- 1. Odometry & TF ---
             current_ros_time = self.get_clock().now().to_msg()
             
-            # Convert Position and Orientation from CARLA to ROS format
             (pos_x, pos_y, pos_z), (qx, qy, qz, qw) = self.carla_transform_to_ros_pose(transform)
             
             
@@ -139,7 +127,6 @@ class CarlaToRosBridge(Node):
 
             qx, qy, qz, qw = self.latest_orientation
             
-            # Publish Transform (odom -> base_footprint)
             t = TransformStamped()
             t.header.stamp = current_ros_time
             t.header.frame_id = 'odom'
@@ -155,7 +142,6 @@ class CarlaToRosBridge(Node):
             
             self.tf_broadcaster.sendTransform(t)
             
-            # Publish Odometry Msg
             odom = Odometry()
             odom.header.stamp = current_ros_time
             odom.header.frame_id = 'odom'
@@ -169,16 +155,11 @@ class CarlaToRosBridge(Node):
             odom.pose.pose.orientation.z = qz
             odom.pose.pose.orientation.w = qw
             
-            # Populate Covariance from IMU
-            # Rotation covariance (3x3 block from IMU)
             for i in range(3):
                 for j in range(3):
-                    # Orientation covariance for Roll/Pitch/Yaw (rotational part of pose)
                     odom.pose.covariance[(i + 3) * 6 + (j + 3)] = self.latest_orientation_covariance[i * 3 + j]
-                    # Angular velocity covariance (rotational part of twist)
                     odom.twist.covariance[(i + 3) * 6 + (j + 3)] = self.latest_angular_vel_covariance[i * 3 + j]
             
-            # For position X, Y, Z
             odom.pose.covariance[0] = 0.01  # x variance
             odom.pose.covariance[7] = 0.01  # y variance
             odom.pose.covariance[14] = 0.01 # z variance
@@ -188,12 +169,10 @@ class CarlaToRosBridge(Node):
             odom.twist.covariance[7] = 0.01  # y variance
             odom.twist.covariance[14] = 0.01 # z variance
             
-            # Convert global linear velocity to ROS convention
             odom.twist.twist.linear.x = velocity.x
             odom.twist.twist.linear.y = -velocity.y
             odom.twist.twist.linear.z = velocity.z
             
-            # Use data from INS if available
             if self.latest_angular_vel:
                 odom.twist.twist.angular.x = self.latest_angular_vel[0]
                 odom.twist.twist.angular.y = self.latest_angular_vel[1]
@@ -203,18 +182,14 @@ class CarlaToRosBridge(Node):
                 odom.twist.twist.angular.y = 0.0
                 odom.twist.twist.angular.z = 0.0
             
+            
             self.odom_pub.publish(odom)
 
-            # --- 2. Joint States (Wheel Animation) ---
-            
-            # Speed needs to be relative to the car's forward direction for wheel spin calculation
-            # Transform global velocity vector to local vehicle frame
             local_vel_x = (velocity.x * transform.get_forward_vector().x +
                            velocity.y * transform.get_forward_vector().y +
                            velocity.z * transform.get_forward_vector().z)
             
-            # Use local_vel_x for wheel spin calculation
-            speed_for_wheels = local_vel_x # This is effectively the forward speed
+            speed_for_wheels = local_vel_x
 
             max_steer_rad = 0.6
             steering_angle = -1.0 * control.steer * max_steer_rad

@@ -2,6 +2,7 @@
 
 import rclpy
 from rclpy.node import Node
+from geometry_msgs.msg import Twist
 import carla
 import pygame
 import numpy as np
@@ -19,6 +20,8 @@ class ManualControlNode(Node):
         self.host = self.get_parameter("carla_host").value
         self.port = self.get_parameter("carla_port").value
         self.role_name = self.get_parameter("role_name").value
+        
+        self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         
         self.client = None
         self.world = None
@@ -146,8 +149,23 @@ def main(args=None):
                 control.manual_gear_shift = False
                 
                 node.vehicle.apply_control(control)
+                
+                twist = Twist()
+                
+                linear_val = 0.0
+                if control.reverse:
+                    linear_val = -control.throttle
+                else:
+                    if control.brake > 0:
+                        linear_val = 0.0
+                    else:
+                        linear_val = control.throttle
+                
+                twist.linear.x = linear_val
+                twist.angular.z = -control.steer
+                
+                node.cmd_vel_pub.publish(twist)
 
-            # 4. Render
             with node.lock:
                 if node.latest_image is not None:
                     surface = pygame.surfarray.make_surface(node.latest_image.swapaxes(0, 1))
