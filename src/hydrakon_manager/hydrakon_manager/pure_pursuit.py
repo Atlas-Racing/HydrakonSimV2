@@ -12,13 +12,13 @@ class PurePursuitNode(Node):
     def __init__(self):
         super().__init__('pure_pursuit_node')
 
-        self.declare_parameter("min_lookahead", 1.5)      # Reduced for sharper turns
+        self.declare_parameter("min_lookahead", 3.0)      # Increased to stabilize steering
         self.declare_parameter("max_lookahead", 6.0)      
         self.declare_parameter("max_steering_angle", 1.0) 
-        self.declare_parameter("constant_speed", 0.15)    # Slower speed
-        self.declare_parameter("min_speed", 0.08)         # Slower cornering
+        self.declare_parameter("constant_speed", 0.1)     # Low speed for stability
+        self.declare_parameter("min_speed", 0.06)         
         self.declare_parameter("track_width_offset", 2.0) 
-        self.declare_parameter("steering_gain", 1.4)      # Increased for tighter radius
+        self.declare_parameter("steering_gain", 0.8)      # Reduced to prevent oscillation
         
         self.min_lookahead = self.get_parameter("min_lookahead").value
         self.max_lookahead = self.get_parameter("max_lookahead").value
@@ -51,87 +51,127 @@ class PurePursuitNode(Node):
 
         blue_cones = []
         yellow_cones = []
-        orange_cones = []
         
-        # Cones are already in base_link frame from fusion node
         for marker in msg.markers:
-            if marker.action == 3: # DELETEALL
-                continue
-                
-            x_final = marker.pose.position.x
-            y_final = marker.pose.position.y
+            if marker.action == 3: continue
             
-            pos = np.array([x_final, y_final])
+            x = marker.pose.position.x
+            y = marker.pose.position.y
             
-            # Visibility window
-            if x_final < 0.5 or x_final > 20.0: 
+            # Reduce visibility horizon to ignore distant distractions
+            # Was 15.0, now 10.0 to focus on immediate track
+            if x < 0.0 or x > 10.0: 
                 continue
+            
+            p = np.array([x, y])
             
             r, g, b = marker.color.r, marker.color.g, marker.color.b
-            if r > 0.9 and g > 0.9 and b < 0.1: # Yellow
-                yellow_cones.append(pos)
-            elif b > 0.9 and r < 0.1 and g < 0.1: # Blue
-                blue_cones.append(pos)
-            elif r > 0.9 and g > 0.4 and b < 0.1: # Orange
-                orange_cones.append(pos)
+            if b > 0.9 and r < 0.1: # Blue (Left)
+                blue_cones.append(p)
+            elif r > 0.9 and g > 0.9: # Yellow (Right)
+                yellow_cones.append(p)
         
-        # Sort by distance
+        # Sort by x distance
         blue_cones.sort(key=lambda p: p[0])
         yellow_cones.sort(key=lambda p: p[0])
-        orange_cones.sort(key=lambda p: p[0])
         
-        raw_target = None
+        target_point = None
         far_target = None
         
-        # --- TARGET SELECTION ---
-        if orange_cones:
-            raw_target = orange_cones[0]
-            
-        elif blue_cones and yellow_cones:
-            # DUAL MODE (Straight/Curve)
-            # 1. Near Target (Position) - Closest 2 cones
-            b_near = np.mean(blue_cones[:2], axis=0)
-            y_near = np.mean(yellow_cones[:2], axis=0)
-            near_midpoint = (b_near + y_near) / 2.0
-            
-            # 2. Far Target (Heading) - Cones further down (index 2-4 if exist)
-            # Use up to 5th cone for far lookahead
-            b_far_list = blue_cones[2:5] if len(blue_cones) > 2 else blue_cones[-1:]
-            y_far_list = yellow_cones[2:5] if len(yellow_cones) > 2 else yellow_cones[-1:]
-            
-            if b_far_list and y_far_list:
-                b_far = np.mean(b_far_list, axis=0)
-                y_far = np.mean(y_far_list, axis=0)
-                far_midpoint = (b_far + y_far) / 2.0
-                
-                # Weighted Blend: 40% Position (Near), 60% Heading (Far)
-                # This aligns the car with the track direction
-                raw_target = 0.4 * near_midpoint + 0.6 * far_midpoint
-                far_target = far_midpoint # For curvature check
-            else:
-                raw_target = near_midpoint
-            
-        elif blue_cones:
-            # SINGLE MODE (Left)
-            # Aim parallel to the cone line
-            raw_target = blue_cones[0] + np.array([0, -self.offset])
-            if len(blue_cones) > 2:
-                far_target = blue_cones[-1] + np.array([0, -self.offset])
-            
-        elif yellow_cones:
-            # SINGLE MODE (Right)
-            raw_target = yellow_cones[0] + np.array([0, self.offset])
-            if len(yellow_cones) > 2:
-                far_target = yellow_cones[-1] + np.array([0, self.offset])
+        # --- ROBUST LINE-BASED PLANNING ---
+        # Only consider a "Line" if the first two cones are close enough.
+        # This prevents connecting a near cone with a far cone (gap in track).
         
-        if raw_target is not None:
-            # Alpha filter
-            alpha = 0.5
-            target_point = alpha * raw_target + (1.0 - alpha) * self.prev_target
-            self.prev_target = target_point
+        has_blue_line = False
+        if len(blue_cones) >= 2:
+            dist = np.linalg.norm(blue_cones[1] - blue_cones[0])
+            if dist < 5.0: # Only form line if cones are somewhat adjacent
+                has_blue_line = True
+        
+        has_yel_line = False
+        if len(yellow_cones) >= 2:
+            dist = np.linalg.norm(yellow_cones[1] - yellow_cones[0])
+            if dist < 5.0:
+                has_yel_line = True
+        
+        if has_blue_line and has_yel_line:
+            # Best Case: Both sides visible. Average the gates.
+            # Gate 0
+            g0 = (blue_cones[0] + yellow_cones[0]) / 2.0
+            # Gate 1
+            g1 = (blue_cones[1] + yellow_cones[1]) / 2.0
             
-            self.publish_point(self.target_pub, target_point)
-            self.drive_to_target(target_point, far_target)
+            # Target is blend, biased slightly forward for smoothness
+            target_point = 0.4 * g0 + 0.6 * g1
+            far_target = g1
+            
+        elif has_blue_line:
+            # Left Turn / Right Side Occluded
+            # Use Blue Line shifted to the Right
+            b0 = blue_cones[0]
+            b1 = blue_cones[1]
+            
+            # Vector b0 -> b1
+            d = b1 - b0
+            norm = np.linalg.norm(d)
+            if norm < 0.1: # Degenerate
+                u = np.array([1.0, 0.0])
+            else:
+                u = d / norm
+            
+            # Normal to the Right (Rotate -90: x,y -> y, -x)
+            n_right = np.array([u[1], -u[0]])
+            
+            # Shift by offset to get center path
+            m0 = b0 + n_right * self.offset
+            m1 = b1 + n_right * self.offset
+            
+            target_point = 0.4 * m0 + 0.6 * m1
+            far_target = m1
+            
+        elif has_yel_line:
+            # Right Turn / Left Side Occluded
+            # Use Yellow Line shifted to the Left
+            y0 = yellow_cones[0]
+            y1 = yellow_cones[1]
+            
+            d = y1 - y0
+            norm = np.linalg.norm(d)
+            if norm < 0.1:
+                u = np.array([1.0, 0.0])
+            else:
+                u = d / norm
+                
+            # Normal to the Left (Rotate +90: x,y -> -y, x)
+            n_left = np.array([-u[1], u[0]])
+            
+            # Shift by offset
+            m0 = y0 + n_left * self.offset
+            m1 = y1 + n_left * self.offset
+            
+            target_point = 0.4 * m0 + 0.6 * m1
+            far_target = m1
+            
+        else:
+            # FALLBACK: Not enough cones to form a line on either side
+            # Try to use closest pair
+            if blue_cones and yellow_cones:
+                target_point = (blue_cones[0] + yellow_cones[0]) / 2.0
+            elif blue_cones:
+                # Maintain offset from single blue cone (assume straight)
+                target_point = blue_cones[0] + np.array([0.0, -self.offset])
+            elif yellow_cones:
+                # Maintain offset from single yellow cone
+                target_point = yellow_cones[0] + np.array([0.0, self.offset])
+                
+        if target_point is not None:
+            # Low Alpha (0.3) for heavy smoothing/damping
+            alpha = 0.3
+            smoothed_target = alpha * target_point + (1.0 - alpha) * self.prev_target
+            self.prev_target = smoothed_target
+            
+            self.publish_point(self.target_pub, smoothed_target)
+            self.drive_to_target(smoothed_target, far_target)
         else:
             self.stop()
 

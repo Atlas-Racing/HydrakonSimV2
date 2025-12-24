@@ -61,7 +61,7 @@ class ConeFusionNode(Node):
         
         # Filtering Parameters
         self.declare_parameter("lidar_min_radius", 2.5)
-        self.declare_parameter("lidar_max_radius", 15.0) 
+        self.declare_parameter("lidar_max_radius", 10.0) 
         self.declare_parameter("lidar_z_min", -3.0)
         self.declare_parameter("lidar_z_max", 1.0)
         
@@ -158,8 +158,8 @@ class ConeFusionNode(Node):
         self.lidar_debug_pub.publish(debug_markers)
         
         if lidar_obs:
-            # LiDAR Trust Reduced (25%) -> Higher Covariance (0.2)
-            R_lidar = np.eye(2) * 0.2 
+            # LiDAR Trust Equalized (50%) -> Covariance (0.1)
+            R_lidar = np.eye(2) * 0.1 
             self.update_tracks(lidar_obs, R_lidar, None)
             self.publish_tracks()
 
@@ -193,8 +193,8 @@ class ConeFusionNode(Node):
                 cam_obs.append(([p_trans.point.x, p_trans.point.y, p_trans.point.z], color_id))
             except: continue
         
-        # Camera Trust Increased (75%) -> Lower Covariance (0.05)
-        R_cam = np.eye(2) * 0.05 
+        # Camera Trust Equalized (50%) -> Covariance (0.1)
+        R_cam = np.eye(2) * 0.1 
         for pos, color_id in cam_obs:
             self.update_single_track(pos, R_cam, color_id)
 
