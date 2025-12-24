@@ -121,7 +121,7 @@ def main(args=None):
     pygame.init()
     pygame.font.init()
     display = pygame.display.set_mode((node.image_width, node.image_height), pygame.HWSURFACE | pygame.DOUBLEBUF)
-    pygame.display.set_caption("Hydrakon Monitor (Manual + Subscriber)")
+    pygame.display.set_caption("Hydrakon Manual Control")
     font = pygame.font.SysFont('monospace', 18)
     clock = pygame.time.Clock()
     
