@@ -60,10 +60,10 @@ class ConeFusionNode(Node):
         super().__init__('cone_fusion_node')
         
         # Filtering Parameters
-        self.declare_parameter("lidar_min_radius", 1.2)
-        self.declare_parameter("lidar_max_radius", 20.0) 
-        self.declare_parameter("lidar_z_min", -2.1)
-        self.declare_parameter("lidar_z_max", -1.5)
+        self.declare_parameter("lidar_min_radius", 2.5)
+        self.declare_parameter("lidar_max_radius", 15.0) 
+        self.declare_parameter("lidar_z_min", -3.0)
+        self.declare_parameter("lidar_z_max", 1.0)
         
         self.min_r = self.get_parameter("lidar_min_radius").value
         self.max_r = self.get_parameter("lidar_max_radius").value
@@ -102,8 +102,18 @@ class ConeFusionNode(Node):
         for p in points:
             x, y, z = p
             dist = math.hypot(x, y)
+            
+            # Vehicle Exclusion Box (Relative to LiDAR)
+            # LiDAR at x=0.6 relative to car center.
+            # Car extends roughly -2.0 to +2.0 in X, -1.2 to +1.2 in Y.
+            # This box filters out chassis, wheels, and suspension.
+            if (x > -3.0 and x < 1.5) and (y > -1.3 and y < 1.3):
+                continue
+            
+            # Distance and Height Filters
             if dist < self.min_r or dist > self.max_r: continue
             if z < self.z_min or z > self.z_max: continue
+            
             filtered_points.append([x, y, z])
             
         if not filtered_points: return

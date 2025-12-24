@@ -55,6 +55,9 @@ class PurePursuitNode(Node):
         
         # Cones are already in base_link frame from fusion node
         for marker in msg.markers:
+            if marker.action == 3: # DELETEALL
+                continue
+                
             x_final = marker.pose.position.x
             y_final = marker.pose.position.y
             
