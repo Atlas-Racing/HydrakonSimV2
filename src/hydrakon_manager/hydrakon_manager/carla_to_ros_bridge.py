@@ -2,7 +2,7 @@
 
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import JointState
+from sensor_msgs.msg import JointState, Imu
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import TransformStamped
 from std_msgs.msg import Header
@@ -29,6 +29,13 @@ class CarlaToRosBridge(Node):
         self.odom_pub = self.create_publisher(Odometry, '/odom', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
 
+        # Subscribe to INS/IMU
+        self.imu_sub = self.create_subscription(Imu, '/imu', self.imu_callback, 10)
+        self.latest_angular_vel = None # Store (x, y, z) tuple
+        self.latest_orientation = None # Store (x, y, z, w) tuple
+        self.latest_orientation_covariance = [0.0] * 9 # Store 3x3 covariance
+        self.latest_angular_vel_covariance = [0.0] * 9 # Store 3x3 covariance
+
         self.client = None
         self.world = None
         self.vehicle = None
@@ -36,15 +43,26 @@ class CarlaToRosBridge(Node):
         self.wheel_rotation_angle = 0.0
         self.last_time = time.time()
         
-        # Initial position offset (to make spawn point (0,0,0) if needed)
-        # Not used for now, as we assume odom is global
-        # self.initial_transform = None 
-
         self.connect_carla()
         
         self.timer = self.create_timer(0.02, self.timer_callback) # 50Hz update
 
         self.get_logger().info("Carla-to-ROS Bridge Node Started.")
+
+    def imu_callback(self, msg):
+        self.latest_angular_vel = (
+            msg.angular_velocity.x,
+            msg.angular_velocity.y,
+            msg.angular_velocity.z
+        )
+        self.latest_orientation = (
+            msg.orientation.x,
+            msg.orientation.y,
+            msg.orientation.z,
+            msg.orientation.w
+        )
+        self.latest_orientation_covariance = list(msg.orientation_covariance)
+        self.latest_angular_vel_covariance = list(msg.angular_velocity_covariance)
 
     def connect_carla(self):
         try:
@@ -115,12 +133,17 @@ class CarlaToRosBridge(Node):
             # Convert Position and Orientation from CARLA to ROS format
             (pos_x, pos_y, pos_z), (qx, qy, qz, qw) = self.carla_transform_to_ros_pose(transform)
             
+            
+            if not self.latest_orientation:
+                return
+
+            qx, qy, qz, qw = self.latest_orientation
+            
             # Publish Transform (odom -> base_footprint)
-            # This makes the base_footprint move in the 'odom' frame
             t = TransformStamped()
             t.header.stamp = current_ros_time
             t.header.frame_id = 'odom'
-            t.child_frame_id = 'base_footprint' # This is the root of our robot model
+            t.child_frame_id = 'base_footprint'
             
             t.transform.translation.x = pos_x
             t.transform.translation.y = pos_y
@@ -132,11 +155,11 @@ class CarlaToRosBridge(Node):
             
             self.tf_broadcaster.sendTransform(t)
             
-            # Publish Odometry Message
+            # Publish Odometry Msg
             odom = Odometry()
             odom.header.stamp = current_ros_time
             odom.header.frame_id = 'odom'
-            odom.child_frame_id = 'base_footprint' # Odometry is usually in child frame's coordinates
+            odom.child_frame_id = 'base_footprint'
             
             odom.pose.pose.position.x = pos_x
             odom.pose.pose.position.y = pos_y
@@ -146,22 +169,39 @@ class CarlaToRosBridge(Node):
             odom.pose.pose.orientation.z = qz
             odom.pose.pose.orientation.w = qw
             
-            # Linear and Angular Velocities for Odom twist (in child_frame_id - base_footprint)
-            # Carla's velocity is global, we need to convert it to local frame
-            # For simplicity, let's convert global velocity to ROS frame and assume no angular velocity for now
-            # Proper conversion involves rotating the global velocity vector by inverse of current orientation
+            # Populate Covariance from IMU
+            # Rotation covariance (3x3 block from IMU)
+            for i in range(3):
+                for j in range(3):
+                    # Orientation covariance for Roll/Pitch/Yaw (rotational part of pose)
+                    odom.pose.covariance[(i + 3) * 6 + (j + 3)] = self.latest_orientation_covariance[i * 3 + j]
+                    # Angular velocity covariance (rotational part of twist)
+                    odom.twist.covariance[(i + 3) * 6 + (j + 3)] = self.latest_angular_vel_covariance[i * 3 + j]
             
-            # Convert global linear velocity to ROS convention (invert Y)
+            # For position X, Y, Z
+            odom.pose.covariance[0] = 0.01  # x variance
+            odom.pose.covariance[7] = 0.01  # y variance
+            odom.pose.covariance[14] = 0.01 # z variance
+            
+            # For linear velocity X, Y, Z
+            odom.twist.covariance[0] = 0.01  # x variance
+            odom.twist.covariance[7] = 0.01  # y variance
+            odom.twist.covariance[14] = 0.01 # z variance
+            
+            # Convert global linear velocity to ROS convention
             odom.twist.twist.linear.x = velocity.x
             odom.twist.twist.linear.y = -velocity.y
             odom.twist.twist.linear.z = velocity.z
             
-            # Angular velocity is harder to get directly from CARLA vehicle object,
-            # would require differentiating orientation or using sensor.
-            # Leaving as 0 for now.
-            odom.twist.twist.angular.x = 0.0
-            odom.twist.twist.angular.y = 0.0
-            odom.twist.twist.angular.z = 0.0
+            # Use data from INS if available
+            if self.latest_angular_vel:
+                odom.twist.twist.angular.x = self.latest_angular_vel[0]
+                odom.twist.twist.angular.y = self.latest_angular_vel[1]
+                odom.twist.twist.angular.z = self.latest_angular_vel[2]
+            else:
+                odom.twist.twist.angular.x = 0.0
+                odom.twist.twist.angular.y = 0.0
+                odom.twist.twist.angular.z = 0.0
             
             self.odom_pub.publish(odom)
 

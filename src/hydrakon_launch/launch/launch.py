@@ -112,6 +112,22 @@ def generate_launch_description():
                 )
             ]
         ),
+        
+        TimerAction(
+            period=1.5,
+            actions=[
+                Node(
+                    package='hydrakon_manager',
+                    executable='ins_node',
+                    name='ins_node',
+                    output='screen',
+                    parameters=[
+                        {'carla_host': 'localhost'},
+                        {'carla_port': 2000}
+                    ]
+                )
+            ]
+        ),
 
         # TimerAction(
         #     period=1.0,
