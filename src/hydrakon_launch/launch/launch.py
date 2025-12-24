@@ -59,11 +59,36 @@ def generate_launch_description():
             arguments=['0', '0', '0.7', '0', '0', '0', 'base_link', 'cone_frame']
         ),
 
+        # Base Link -> Sensor Frames
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
-            name='base_link_to_lidar_link',
-            arguments=['1.5', '0', '2.2', '0', '0', '0', 'base_link', 'lidar_link']
+            name='base_link_to_sensor_frames',
+            arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'sensor_frames']
+        ),
+
+        # Sensor Frames -> Lidar
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='sensor_frames_to_lidar',
+            arguments=['0.6', '0', '1.0', '0', '0', '0', 'sensor_frames', 'lidar_link']
+        ),
+
+        # Sensor Frames -> RGB Camera
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='sensor_frames_to_rgb_camera',
+            arguments=['1.05', '0', '1.0', '0', '-0.087', '0', 'sensor_frames', 'camera_rgb_frame']
+        ),
+
+        # Sensor Frames -> Depth Camera
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='sensor_frames_to_depth_camera',
+            arguments=['1.05', '0', '1.0', '0', '-0.087', '0', 'sensor_frames', 'camera_depth_frame']
         ),
 
         Node(
