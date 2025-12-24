@@ -7,7 +7,7 @@
   <xacro:property name="wheelbase_x" value="1.5"/>
   <xacro:property name="track_width_y" value="1.05"/>
   <xacro:property name="wheel_z_offset" value="0.48"/>
-  <xacro:property name="robot_z_offset" value="5.5"/>
+  <xacro:property name="robot_z_offset" value="0.5"/>
 
   <!-- Base Link (Chassis) -->
   <link name="base_link">
@@ -36,6 +36,7 @@
     <child link="base_link"/>
     <origin xyz="0 0 ${robot_z_offset}" rpy="0 0 0"/>
   </joint>
+
 
   <!-- Wheel Macro -->
   <xacro:macro name="wheel" params="name parent x y z steering">

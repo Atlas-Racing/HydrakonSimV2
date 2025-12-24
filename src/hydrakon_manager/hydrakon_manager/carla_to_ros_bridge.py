@@ -23,6 +23,9 @@ class CarlaToRosBridge(Node):
         self.host = self.get_parameter("carla_host").value
         self.port = self.get_parameter("carla_port").value
         self.role_name = self.get_parameter("role_name").value
+        
+        self.declare_parameter("z_correction", -1.26)
+        self.z_correction = self.get_parameter("z_correction").value
 
         # Publishers
         self.joint_pub = self.create_publisher(JointState, '/joint_states', 10)
@@ -121,6 +124,7 @@ class CarlaToRosBridge(Node):
             
             (pos_x, pos_y, pos_z), (qx, qy, qz, qw) = self.carla_transform_to_ros_pose(transform)
             
+            pos_z += self.z_correction
             
             if not self.latest_orientation:
                 return
