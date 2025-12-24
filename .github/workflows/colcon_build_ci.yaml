@@ -14,6 +14,9 @@ on:
       - 'src/**'
       - '.github/workflows/colcon_build_ci.yaml'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
