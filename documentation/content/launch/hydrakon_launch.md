@@ -65,3 +65,4 @@ This launch file acts as the main entry point for the simulation system. It orch
 | `model_path` | `.../best.onnx` | Path to the YOLO object detection model file. |
 | `benchmark` | `False` | Enable benchmarking mode for inference timing statistics. |
 | `manual_control` | `False` | Set to `True` to launch the Pygame manual control window. |
+| `gw` | `False` | Set to `True` to launch the Greenwave Monitor (TUI). |

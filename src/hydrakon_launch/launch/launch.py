@@ -25,6 +25,12 @@ def generate_launch_description():
         default_value='False',
         description='Enable manual control window (Pygame)'
     )
+
+    gw_arg = DeclareLaunchArgument(
+        'gw',
+        default_value='False',
+        description='Enable Greenwave Monitor (TUI)'
+    )
     
     from launch.conditions import IfCondition
     
@@ -39,6 +45,7 @@ def generate_launch_description():
         model_path_arg,
         benchmark_arg,
         manual_control_arg,
+        gw_arg,
         
         hydrakon_description_launch,
 
@@ -165,6 +172,7 @@ def generate_launch_description():
                     name='r2s_gw',
                     output='screen',
                     prefix='xterm -e',
+                    condition=IfCondition(LaunchConfiguration('gw')),
                 )
             ]
         ),

@@ -31,9 +31,12 @@ ros2 launch hydrakon_launch launch.py [model_path:=...] [benchmark:=True/False] 
 
 ### Launch Arguments
 
+For a comprehensive list and detailed descriptions of all launch arguments, please refer to the [Launch System Overview](/launch/hydrakon_launch) documentation.
+
 *   `model_path`: Path to the YOLO model (default: `src/.../models/best.onnx`).
 *   `benchmark`: Enable inference timing logging (default: `False`).
 *   `manual_control`: Enable Pygame window for driving the vehicle (default: `False`).
+*   `gw`: Enable Greenwave Monitor TUI (default: `False`).
 
 ### Examples
 
