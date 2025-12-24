@@ -2,6 +2,7 @@
 
 import rclpy
 from rclpy.node import Node
+from rclpy.duration import Duration
 from sensor_msgs.msg import PointCloud2
 from visualization_msgs.msg import Marker, MarkerArray
 import struct
@@ -17,8 +18,6 @@ class ConeTrack:
         self.y = y 
         self.z = z 
         self.cov = cov 
-        # [Unknown, Yellow, Blue, Orange]
-        # Initialize heavily as Unknown
         self.color_probs = np.array([0.97, 0.01, 0.01, 0.01])
         if color_id != 0:
             self.update_color(color_id)
@@ -28,42 +27,30 @@ class ConeTrack:
         self.obs_count = 1
 
     def update_color(self, color_id):
-        # Bayesian update
-        # If camera sees color, boost that color significantly
-        if color_id == 0: return # Unknown update doesn't change much
-        
+        if color_id == 0: return 
         likelihood = np.array([0.1, 0.1, 0.1, 0.1])
         if color_id == 1: likelihood = np.array([0.05, 0.9, 0.025, 0.025]) # Yellow
         elif color_id == 2: likelihood = np.array([0.05, 0.025, 0.9, 0.025]) # Blue
         elif color_id == 3: likelihood = np.array([0.05, 0.025, 0.025, 0.9]) # Orange
-        
         self.color_probs *= likelihood
         self.color_probs /= np.sum(self.color_probs)
 
     def get_color(self):
-        # Return ID with max probability
-        # If Unknown is still highest, return 0
         return np.argmax(self.color_probs)
 
     def update(self, z_x, z_y, z_z, R_cov, timestamp):
-        # Kalman Update for Position
         H = np.eye(2)
         S = self.cov + R_cov
         try:
             K = self.cov @ np.linalg.inv(S)
         except:
             K = np.zeros((2,2))
-        
         y = np.array([z_x - self.x, z_y - self.y])
         state_update = K @ y
-        
         self.x += state_update[0]
         self.y += state_update[1]
-        
-        # Simple Z update
         if z_z is not None:
              self.z = 0.9 * self.z + 0.1 * z_z
-        
         self.cov = (np.eye(2) - K) @ self.cov
         self.last_seen = timestamp
         self.obs_count += 1
@@ -99,7 +86,7 @@ class ConeFusionNode(Node):
         self.cam_z_offset = 2.5
         self.cam_pitch = math.radians(-15.0)
 
-        self.get_logger().info("Cone Fusion Node (Lidar-Dominant Position) Started")
+        self.get_logger().info("Cone Fusion Node (Camera-Dominant) Started")
 
     def get_transform(self, target_frame, source_frame):
         try:
@@ -108,7 +95,6 @@ class ConeFusionNode(Node):
             return None
 
     def lidar_callback(self, msg):
-        # 1. Parse & Filter
         points = self.parse_pointcloud(msg)
         if not points: return
             
@@ -122,12 +108,16 @@ class ConeFusionNode(Node):
             
         if not filtered_points: return
             
-        # 2. Clustering
         clusters = self.cluster_points(filtered_points, tolerance=0.6, min_size=2)
         
-        # 3. Process Clusters
         lidar_obs = []
         debug_markers = MarkerArray()
+        
+        # DELETEALL for debug
+        m_del = Marker()
+        m_del.action = 3 
+        debug_markers.markers.append(m_del)
+
         transform = self.get_transform("odom", msg.header.frame_id)
         
         for i, cluster in enumerate(clusters):
@@ -135,19 +125,18 @@ class ConeFusionNode(Node):
             cy = np.mean([p[1] for p in cluster])
             cz = np.mean([p[2] for p in cluster])
             
-            # Debug Marker (Cyan)
             m = Marker()
             m.header = msg.header
             m.ns = "lidar_raw"
             m.id = i
             m.type = Marker.CYLINDER
             m.action = Marker.ADD
+            m.lifetime = Duration(seconds=0.1).to_msg()
             m.pose.position.x, m.pose.position.y, m.pose.position.z = float(cx), float(cy), float(cz)
             m.scale.x, m.scale.y, m.scale.z = 0.4, 0.4, 0.5
             m.color.r, m.color.g, m.color.b, m.color.a = 0.0, 1.0, 1.0, 0.8
             debug_markers.markers.append(m)
             
-            # Transform to Odom
             if transform:
                 p_stamped = tf2_geometry_msgs.PointStamped()
                 p_stamped.point.x, p_stamped.point.y, p_stamped.point.z = float(cx), float(cy), float(cz)
@@ -158,11 +147,11 @@ class ConeFusionNode(Node):
 
         self.lidar_debug_pub.publish(debug_markers)
         
-        # 4. EKF Update (LIDAR)
-        # Low Covariance = High Trust in Position
-        R_lidar = np.eye(2) * 0.05 
-        self.update_tracks(lidar_obs, R_lidar, None)
-        self.publish_tracks()
+        if lidar_obs:
+            # LiDAR Trust Reduced (25%) -> Higher Covariance (0.2)
+            R_lidar = np.eye(2) * 0.2 
+            self.update_tracks(lidar_obs, R_lidar, None)
+            self.publish_tracks()
 
     def camera_callback(self, msg):
         transform_base_odom = self.get_transform("odom", "base_link")
@@ -173,7 +162,6 @@ class ConeFusionNode(Node):
         sp = math.sin(self.cam_pitch)
 
         for marker in msg.markers:
-            # Manual Transform
             raw_x, raw_y, raw_z = marker.pose.position.x, marker.pose.position.y, marker.pose.position.z
             x_rot = raw_x * cp - raw_z * sp
             y_rot = raw_y
@@ -192,19 +180,16 @@ class ConeFusionNode(Node):
                 if r > 0.9 and g > 0.9: color_id = 1 
                 elif b > 0.9: color_id = 2 
                 elif r > 0.9 and g > 0.4: color_id = 3 
-                
                 cam_obs.append(([p_trans.point.x, p_trans.point.y, p_trans.point.z], color_id))
             except: continue
         
-        # 5. EKF Update (CAMERA)
-        # High Covariance = Low Trust in Position (don't move track)
-        # But we pass color_id to update the color belief.
-        R_cam = np.eye(2) * 10.0 
+        # Camera Trust Increased (75%) -> Lower Covariance (0.05)
+        R_cam = np.eye(2) * 0.05 
         for pos, color_id in cam_obs:
             self.update_single_track(pos, R_cam, color_id)
 
     def update_tracks(self, observations, R, color_id_common=None):
-        threshold = 1.0 # Strict matching for Lidar (1.0m)
+        threshold = 1.0 
         for obs in observations:
             pos = obs
             best_dist = float('inf')
@@ -219,16 +204,13 @@ class ConeFusionNode(Node):
             if best_dist < threshold:
                 self.tracks[best_idx].update(pos[0], pos[1], pos[2], R, now)
             else:
-                # Create new track from LiDAR
-                new_track = ConeTrack(pos[0], pos[1], pos[2], R, 0, now) # ID 0 = Unknown
+                new_track = ConeTrack(pos[0], pos[1], pos[2], R, 0, now) 
                 new_track.id = self.track_id_counter
                 self.track_id_counter += 1
                 self.tracks.append(new_track)
 
     def update_single_track(self, pos, R, color_id):
-        # Match Camera to existing LiDAR tracks
-        threshold = 2.5 # Loose matching (2.5m) to catch the Lidar track even if camera offset is bad
-        
+        threshold = 2.5 
         best_dist = float('inf')
         best_idx = -1
         for i, track in enumerate(self.tracks):
@@ -237,28 +219,34 @@ class ConeFusionNode(Node):
                 best_dist = dist
                 best_idx = i
         now = self.get_clock().now()
-        
         if best_dist < threshold:
-            # Update Position (Weakly) and Color (Strongly)
             self.tracks[best_idx].update(pos[0], pos[1], pos[2], R, now)
             self.tracks[best_idx].update_color(color_id)
         else:
-            # Camera sees a cone that Lidar didn't? 
-            # Ignore it. We trust Lidar for existence/position.
-            pass
+            # Allow Camera to Create Tracks (Since we trust it more now)
+            t = ConeTrack(pos[0], pos[1], pos[2], R, color_id, now)
+            t.id = self.track_id_counter
+            self.track_id_counter += 1
+            self.tracks.append(t)
 
     def publish_tracks(self):
         now = self.get_clock().now()
-        transform = self.get_transform("base_link", "odom")
-        if not transform: return
+        transform = self.get_transform("base_footprint", "odom")
+        
+        if not transform:
+            return
         
         marker_array = MarkerArray()
-        active_tracks = []
         
+        # DELETEALL
+        m_del = Marker()
+        m_del.action = 3 
+        marker_array.markers.append(m_del)
+        
+        active_tracks = []
         for track in self.tracks:
-            # Prune old
             age = (now.nanoseconds - track.last_seen.nanoseconds) / 1e9
-            if age < 1.0: # Keep for 1 second
+            if age < 0.5: 
                 active_tracks.append(track)
             
             p_stamped = tf2_geometry_msgs.PointStamped()
@@ -266,25 +254,27 @@ class ConeFusionNode(Node):
             try:
                 p_local = tf2_geometry_msgs.do_transform_point(p_stamped, transform)
                 
-                # Check bounds
                 if p_local.point.x < -2.0 or p_local.point.x > 30.0: continue
                 
                 m = Marker()
-                m.header.frame_id = "base_link"
+                m.header.frame_id = "base_footprint"
                 m.header.stamp = now.to_msg()
                 m.ns = "fused_cones"
                 m.id = track.id
                 m.type = Marker.CYLINDER
                 m.action = Marker.ADD
-                m.lifetime = Duration(seconds=0.5).to_msg()
-                m.pose.position = p_local.point
-                m.scale.x, m.scale.y, m.scale.z = 0.3, 0.3, 0.6
+                m.lifetime = Duration(seconds=0.2).to_msg()
                 
+                m.pose.position.x = p_local.point.x
+                m.pose.position.y = p_local.point.y
+                m.pose.position.z = 0.0 
+                
+                m.scale.x, m.scale.y, m.scale.z = 0.3, 0.3, 0.6
                 cid = track.get_color()
-                if cid == 1: m.color.r, m.color.g, m.color.b = 1.0, 1.0, 0.0 # Yellow
-                elif cid == 2: m.color.r, m.color.g, m.color.b = 0.0, 0.0, 1.0 # Blue
-                elif cid == 3: m.color.r, m.color.g, m.color.b = 1.0, 0.5, 0.0 # Orange
-                else: m.color.r, m.color.g, m.color.b = 1.0, 1.0, 1.0 # Unknown (White)
+                if cid == 1: m.color.r, m.color.g, m.color.b = 1.0, 1.0, 0.0 
+                elif cid == 2: m.color.r, m.color.g, m.color.b = 0.0, 0.0, 1.0 
+                elif cid == 3: m.color.r, m.color.g, m.color.b = 1.0, 0.5, 0.0 
+                else: m.color.r, m.color.g, m.color.b = 1.0, 1.0, 1.0 
                 m.color.a = 1.0
                 marker_array.markers.append(m)
             except: continue

@@ -12,13 +12,13 @@ class PurePursuitNode(Node):
     def __init__(self):
         super().__init__('pure_pursuit_node')
 
-        self.declare_parameter("min_lookahead", 2.0)      # Close lookahead for corners
-        self.declare_parameter("max_lookahead", 6.0)      # Far lookahead for straights
+        self.declare_parameter("min_lookahead", 1.5)      # Reduced for sharper turns
+        self.declare_parameter("max_lookahead", 6.0)      
         self.declare_parameter("max_steering_angle", 1.0) 
-        self.declare_parameter("constant_speed", 0.22)    # Max straight speed
-        self.declare_parameter("min_speed", 0.10)         # Min corner speed
-        self.declare_parameter("track_width_offset", 2.0) # Reduced slightly to stay tighter
-        self.declare_parameter("steering_gain", 1.1)      # Reduced for stability
+        self.declare_parameter("constant_speed", 0.15)    # Slower speed
+        self.declare_parameter("min_speed", 0.08)         # Slower cornering
+        self.declare_parameter("track_width_offset", 2.0) 
+        self.declare_parameter("steering_gain", 1.4)      # Increased for tighter radius
         
         self.min_lookahead = self.get_parameter("min_lookahead").value
         self.max_lookahead = self.get_parameter("max_lookahead").value
