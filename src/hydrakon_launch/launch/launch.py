@@ -60,6 +60,13 @@ def generate_launch_description():
         ),
 
         Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='base_link_to_lidar_link',
+            arguments=['1.5', '0', '2.2', '0', '0', '0', 'base_link', 'lidar_link']
+        ),
+
+        Node(
             package='hydrakon_manager',
             executable='vehicle_spawner',
             name='carla_vehicle_spawner',
@@ -120,6 +127,22 @@ def generate_launch_description():
                     package='hydrakon_manager',
                     executable='ins_node',
                     name='ins_node',
+                    output='screen',
+                    parameters=[
+                        {'carla_host': 'localhost'},
+                        {'carla_port': 2000}
+                    ]
+                )
+            ]
+        ),
+
+        TimerAction(
+            period=2.0,
+            actions=[
+                Node(
+                    package='hydrakon_manager',
+                    executable='lidar_node',
+                    name='lidar_node',
                     output='screen',
                     parameters=[
                         {'carla_host': 'localhost'},
