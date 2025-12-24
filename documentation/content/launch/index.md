@@ -7,3 +7,4 @@ This section documents the launch files available in the project and the nodes t
 ## Table of Contents
 
 - [Hydrakon Launch System](hydrakon_launch) - Documentation for the main system launch file.
+- [Graph of Nodes and Connections](node_connections.md) - Visuals and graphs showing the various nodes, connections and the different transform frames.
