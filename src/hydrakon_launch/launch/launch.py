@@ -8,9 +8,12 @@ from launch.substitutions import LaunchConfiguration
 from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
+    hydrakon_camera_share = get_package_share_directory('hydrakon_camera')
+    default_model_path = os.path.join(hydrakon_camera_share, 'models', 'best.onnx')
+
     model_path_arg = DeclareLaunchArgument(
         'model_path',
-        default_value='/home/aditya/HydrakonSimV2/src/hydrakon_camera/hydrakon_camera/models/best.onnx',
+        default_value=default_model_path,
         description='Path to the YOLO model (.pt or .onnx)'
     )
 

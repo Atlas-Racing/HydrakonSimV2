@@ -66,7 +66,7 @@ The system publishes 3D markers for detected cones, allowing you to visualize th
     ros2 run rviz2 rviz2
     ```
 3.  **Configure RViz:**
-    *   **Fixed Frame:** Set to `cone_frame` (Type this in manually).
+    *   **Fixed Frame:** Set to `base_link`.
     *   **Add Display:** Click **Add** -> Select **MarkerArray** -> Set Topic to `/camera/cone_markers`.
     *   **Add Display (Optional):** Click **Add** -> Select **Image** -> Set Topic to `/camera/cone_detections_image` to see the 2D detections.
 
