@@ -190,7 +190,7 @@ def generate_launch_description():
                     executable='r2s_gw',
                     name='r2s_gw',
                     output='screen',
-                    prefix='xterm -e',
+                    prefix='gnome-terminal --disable-factory -- ',
                     condition=IfCondition(LaunchConfiguration('gw')),
                 )
             ]
