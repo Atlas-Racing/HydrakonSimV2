@@ -22,12 +22,12 @@ def generate_launch_description():
             parameters=[{'robot_description': robot_description}]
         ),
         
-        # 2. GUI to play with joints (optional, but good for checking wheels later)
-        # Node(
-        #     package='joint_state_publisher_gui',
-        #     executable='joint_state_publisher_gui',
-        #     name='joint_state_publisher_gui'
-        # ),
+        # 2. GUI to play with joints
+        Node(
+            package='joint_state_publisher_gui',
+            executable='joint_state_publisher_gui',
+            name='joint_state_publisher_gui'
+        ),
 
         # 3. Launch Rviz2
         Node(

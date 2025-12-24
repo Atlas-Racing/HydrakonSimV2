@@ -1,37 +1,118 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="hydrakon_vehicle">
 
-  <xacro:property name="mesh_x_offset" value="0.0"/>
-  <xacro:property name="mesh_y_offset" value="-3.0"/>
-  <xacro:property name="mesh_z_offset" value="0.0"/>
-  
-  <xacro:property name="mesh_roll" value="0.0"/>
-  <xacro:property name="mesh_pitch" value="0.0"/>
-  <xacro:property name="mesh_yaw" value="0.0"/>
+  <!-- Properties -->
+  <xacro:property name="wheel_radius" value="0.3"/>
+  <xacro:property name="wheel_width" value="0.2"/>
+  <xacro:property name="wheelbase_x" value="1.5"/>
+  <xacro:property name="track_width_y" value="1.05"/>
+  <xacro:property name="wheel_z_offset" value="0.48"/>
+  <xacro:property name="robot_z_offset" value="5.5"/>
 
+  <!-- Base Link (Chassis) -->
   <link name="base_link">
     <visual>
-      <origin xyz="${mesh_x_offset} ${mesh_y_offset} ${mesh_z_offset}" 
-              rpy="${mesh_roll} ${mesh_pitch} ${mesh_yaw}"/>
+      <origin xyz="3 0 0.1" rpy="0 0 ${pi/2}"/>
       <geometry>
-        <mesh filename="package://hydrakon_description/meshes/ads_dv.stl" scale="0.0019 0.0019 0.0019"/>
+        <mesh filename="package://hydrakon_description/meshes/ads_dv_body.stl" scale="0.0019 0.0019 0.0019"/>
       </geometry>
       <material name="team_color">
-        <color rgba="0.0 0.4 0.8 1.0"/> </material>
+        <color rgba="1.0 1.0 1.0 1.0"/> 
+      </material>
     </visual>
     
     <collision>
-      <origin xyz="${1.53/2} 0 0.3" rpy="0 0 0"/> <geometry>
-        <box size="2.5 1.2 0.6"/> </geometry>
+      <origin xyz="${1.53/2} 0 0.3" rpy="0 0 ${pi/2}"/>
+      <geometry>
+        <box size="2.5 1.2 0.6"/> 
+      </geometry>
     </collision>
   </link>
 
   <link name="base_footprint"/>
   
   <joint name="base_footprint_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="base_footprint"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${robot_z_offset}" rpy="0 0 0"/>
   </joint>
+
+  <!-- Wheel Macro -->
+  <xacro:macro name="wheel" params="name parent x y z steering">
+    <xacro:if value="${steering}">
+      <link name="${name}_steering_link">
+        <inertial>
+          <mass value="1.0"/>
+          <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+        </inertial>
+      </link>
+
+      <joint name="${name}_steering_joint" type="revolute">
+        <parent link="${parent}"/>
+        <child link="${name}_steering_link"/>
+        <origin xyz="${x} ${y} ${z}" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit lower="-0.6" upper="0.6" effort="100" velocity="1.0"/>
+      </joint>
+
+      <link name="${name}_wheel">
+        <visual>
+          <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/> 
+          <geometry>
+            <mesh filename="package://hydrakon_description/meshes/ads_dv_wheel.stl" scale="0.0019 0.0019 0.0019"/>
+          </geometry>
+          <material name="black">
+            <color rgba="0.1 0.1 0.1 1"/>
+          </material>
+        </visual>
+        <collision>
+          <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>
+          <geometry>
+            <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+          </geometry>
+        </collision>
+      </link>
+
+      <joint name="${name}_wheel_joint" type="continuous">
+        <parent link="${name}_steering_link"/>
+        <child link="${name}_wheel"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <axis xyz="0 1 0"/>
+      </joint>
+    </xacro:if>
+
+    <xacro:unless value="${steering}">
+      <link name="${name}_wheel">
+        <visual>
+          <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>
+          <geometry>
+            <mesh filename="package://hydrakon_description/meshes/ads_dv_wheel.stl" scale="0.0019 0.0019 0.0019"/>
+          </geometry>
+          <material name="black">
+            <color rgba="0.1 0.1 0.1 1"/>
+          </material>
+        </visual>
+        <collision>
+          <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>
+          <geometry>
+            <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+          </geometry>
+        </collision>
+      </link>
+
+      <joint name="${name}_wheel_joint" type="continuous">
+        <parent link="${parent}"/>
+        <child link="${name}_wheel"/>
+        <origin xyz="${x} ${y} ${z}" rpy="0 0 0"/>
+        <axis xyz="0 1 0"/>
+      </joint>
+    </xacro:unless>
+  </xacro:macro>
+
+  <xacro:wheel name="front_left" parent="base_link" x="${wheelbase_x}" y="${track_width_y}" z="${wheel_z_offset}" steering="true"/>
+  <xacro:wheel name="front_right" parent="base_link" x="${wheelbase_x}" y="-${track_width_y}" z="${wheel_z_offset}" steering="true"/>
+
+  <xacro:wheel name="rear_left" parent="base_link" x="-${wheelbase_x}" y="${track_width_y}" z="${wheel_z_offset}" steering="false"/>
+  <xacro:wheel name="rear_right" parent="base_link" x="-${wheelbase_x}" y="-${track_width_y}" z="${wheel_z_offset}" steering="false"/>
 
 </robot>
