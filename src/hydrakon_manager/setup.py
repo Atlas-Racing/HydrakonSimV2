@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'vehicle_spawner = hydrakon_manager.vehicle_node:main',
             'manual_control = hydrakon_manager.manual_control:main',
+            'carla_bridge = hydrakon_manager.carla_to_ros_bridge:main',
         ],
     },
 )

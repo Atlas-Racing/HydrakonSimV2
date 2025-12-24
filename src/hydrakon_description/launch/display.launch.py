@@ -23,10 +23,18 @@ def generate_launch_description():
         ),
         
         # 2. GUI to play with joints
+        # Node(
+        #     package='joint_state_publisher_gui',
+        #     executable='joint_state_publisher_gui',
+        #     name='joint_state_publisher_gui'
+        # ),
+
+        # 2. Carla Bridge (Joint States)
         Node(
-            package='joint_state_publisher_gui',
-            executable='joint_state_publisher_gui',
-            name='joint_state_publisher_gui'
+            package='hydrakon_manager',
+            executable='carla_bridge',
+            name='carla_bridge',
+            output='screen'
         ),
 
         # 3. Launch Rviz2
