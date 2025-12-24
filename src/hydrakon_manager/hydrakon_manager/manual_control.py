@@ -21,7 +21,7 @@ class ManualControlNode(Node):
         self.port = self.get_parameter("carla_port").value
         self.role_name = self.get_parameter("role_name").value
         
-        self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.cmd_vel_sub = self.create_subscription(Twist, '/cmd_vel', self.cmd_vel_callback, 10)
         
         self.client = None
         self.world = None
@@ -34,6 +34,35 @@ class ManualControlNode(Node):
         self.lock = threading.Lock()
         
         self.get_logger().info("Manual Control Node Started. Waiting for Carla...")
+
+    def cmd_vel_callback(self, msg):
+        if not self.vehicle:
+            return
+
+        # If user is pressing keys, ignore remote command to avoid fighting
+        # We can't easily check pygame state here, so we rely on main loop overriding us if needed.
+        # But since main loop runs at 60Hz and this callback runs async, 
+        # main loop will likely win if it applies control every frame.
+        # So we trust main loop to ONLY apply control if keys are pressed.
+        
+        control = carla.VehicleControl()
+        control.steer = -msg.angular.z
+        control.steer = max(-1.0, min(1.0, control.steer))
+
+        vx = msg.linear.x
+        if vx >= 0.0:
+            control.throttle = min(1.0, vx)
+            control.brake = 0.0
+            control.reverse = False
+        else:
+            control.throttle = min(1.0, abs(vx))
+            control.brake = 0.0
+            control.reverse = True
+        
+        control.hand_brake = False
+        control.manual_gear_shift = False
+        
+        self.vehicle.apply_control(control)
 
     def connect_carla(self):
         try:
@@ -92,7 +121,7 @@ def main(args=None):
     pygame.init()
     pygame.font.init()
     display = pygame.display.set_mode((node.image_width, node.image_height), pygame.HWSURFACE | pygame.DOUBLEBUF)
-    pygame.display.set_caption("Hydrakon Manual Control")
+    pygame.display.set_caption("Hydrakon Monitor (Manual + Subscriber)")
     font = pygame.font.SysFont('monospace', 18)
     clock = pygame.time.Clock()
     
@@ -148,23 +177,16 @@ def main(args=None):
                 control.reverse = reverse
                 control.manual_gear_shift = False
                 
-                node.vehicle.apply_control(control)
+                # Check if any driving key is pressed
+                any_key_pressed = any(keys[k] for k in [pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d, pygame.K_SPACE])
                 
-                twist = Twist()
-                
-                linear_val = 0.0
-                if control.reverse:
-                    linear_val = -control.throttle
-                else:
-                    if control.brake > 0:
-                        linear_val = 0.0
-                    else:
-                        linear_val = control.throttle
-                
-                twist.linear.x = linear_val
-                twist.angular.z = -control.steer
-                
-                node.cmd_vel_pub.publish(twist)
+                if any_key_pressed:
+                    node.vehicle.apply_control(control)
+
+            # Retrieve current control state for HUD (reflects either manual or ROS input)
+            current_control = carla.VehicleControl()
+            if node.vehicle:
+                current_control = node.vehicle.get_control()
 
             with node.lock:
                 if node.latest_image is not None:
@@ -172,11 +194,12 @@ def main(args=None):
                     display.blit(surface, (0, 0))
             
             hud_text = [
-                f"Throttle: {control.throttle if node.vehicle else 0:.1f}",
-                f"Steer: {control.steer if node.vehicle else 0:.1f}",
-                f"Brake: {control.brake if node.vehicle else 0:.1f}",
-                f"Reverse: {reverse}",
+                f"Throttle: {current_control.throttle:.1f}",
+                f"Steer: {current_control.steer:.1f}",
+                f"Brake: {current_control.brake:.1f}",
+                f"Reverse: {current_control.reverse}",
                 f"FPS: {clock.get_fps():.0f}",
+                "Mode: Manual (WASD) & Subscriber (/cmd_vel)",
                 "Controls: W=Gas, S=Brake, A/D=Steer, Space=Handbrake, Q=Toggle Reverse"
             ]
             
