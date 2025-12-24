@@ -53,7 +53,7 @@ def generate_launch_description():
             package='tf2_ros',
             executable='static_transform_publisher',
             name='base_link_to_cone_frame',
-            arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'cone_frame']
+            arguments=['0', '0', '0.7', '0', '0', '0', 'base_link', 'cone_frame']
         ),
 
         Node(
@@ -177,29 +177,12 @@ def generate_launch_description():
             ]
         ),
 
-        # TimerAction(
-        #     period=3.0,
-        #     actions=[
-        #         Node(
-        #             package='rosapi',
-        #             executable='rosapi_node',
-        #             name='rosapi',
-        #             output='screen'
-        #         ),
-        #         Node(
-        #             package='rosbridge_server',
-        #             executable='rosbridge_websocket',
-        #             name='rosbridge_websocket',
-        #             output='screen',
-        #             parameters=[
-        #                 {'port': 9090},
-        #                 {'address': '0.0.0.0'},
-        #                 {'authenticate': False},
-        #                 {'fragment_timeout': 600},
-        #                 {'delay_between_messages': 0}
-        #             ]
-        #         )
-        #     ]
-        # ),
+        Node(
+            package='rviz2',
+            executable='rviz2',
+            name='rviz2',
+            output='screen',
+            arguments=['-d', os.path.join(get_package_share_directory('hydrakon_launch'), 'rviz', 'default.rviz')]
+        )
         
     ])

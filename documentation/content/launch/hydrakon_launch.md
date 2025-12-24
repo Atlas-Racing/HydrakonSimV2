@@ -58,6 +58,13 @@ This launch file acts as the main entry point for the simulation system. It orch
 - **Source:** `src/r2s_gw/r2s_gw/main.py`
 - **Description:** Launches the R2S Gateway, a Terminal User Interface (TUI) for monitoring and interacting with the ROS 2 system.
 
+### 8. `base_link_to_cone_frame` Static Transform
+- **Node Name:** `base_link_to_cone_frame`
+- **Package:** `tf2_ros`
+- **Executable:** `static_transform_publisher`
+- **Arguments:** `0 0 0.7 0 0 0 base_link cone_frame`
+- **Description:** Publishes a static transform between `base_link` and `cone_frame`. The `cone_frame` is offset by `0.5` meters along the Z-axis from `base_link` to lift the visualized cones off the ground.
+
 ## Launch Arguments
 
 | Argument | Default Value | Description |

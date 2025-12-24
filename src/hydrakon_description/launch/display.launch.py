@@ -35,13 +35,5 @@ def generate_launch_description():
             executable='carla_bridge',
             name='carla_bridge',
             output='screen'
-        ),
-
-        # 3. Launch Rviz2
-        Node(
-            package='rviz2',
-            executable='rviz2',
-            name='rviz2',
-            output='screen'
         )
     ])
