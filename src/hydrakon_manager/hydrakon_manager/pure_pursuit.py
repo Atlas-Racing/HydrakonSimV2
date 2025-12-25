@@ -142,7 +142,7 @@ class PurePursuitNode(Node):
                     time.sleep(2.0)
 
                     # Auto-save Map
-                    map_path = "/home/abdul/Documents/CARLA_2025/HydrakonSimV2/my_track_map"
+                    map_path = os.path.join(os.path.expanduser("~"), "HydrakonSimV2", "my_track_map")
                     try:
                         cmd = ["ros2", "run", "nav2_map_server", "map_saver_cli", "-f", map_path]
                         self.get_logger().info(f"Executing: {' '.join(cmd)}")
