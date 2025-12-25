@@ -199,8 +199,6 @@ def main(args=None):
                 f"Brake: {current_control.brake:.1f}",
                 f"Reverse: {current_control.reverse}",
                 f"FPS: {clock.get_fps():.0f}",
-                "Mode: Manual (WASD) & Subscriber (/cmd_vel)",
-                "Controls: W=Gas, S=Brake, A/D=Steer, Space=Handbrake, Q=Toggle Reverse"
             ]
             
             for i, line in enumerate(hud_text):

@@ -13,7 +13,8 @@ def generate_launch_description():
     
     # Configuration Variables
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
-    map_dir = '/home/abdul/Documents/CARLA_2025/HydrakonSimV2/my_track_map.yaml'
+    home_dir = os.path.expanduser('~')
+    map_dir = os.path.join(home_dir, 'HydrakonSimV2', 'my_track_map.yaml') 
     params_file = os.path.join(hydrakon_launch_dir, 'config', 'nav2_params.yaml')
 
     return LaunchDescription([

@@ -37,6 +37,18 @@ Install the required Python libraries. Note that we strictly require **NumPy < 2
 pip install "numpy<2" torch torchvision ultralytics opencv-python onnx onnxruntime-gpu
 ```
 
+### Install ROS 2 Navigation Packages
+
+Install the necessary packages for SLAM and Navigation. Replace `$ROS_DISTRO` with your active ROS 2 distribution (e.g., `jazzy`).
+
+```bash
+sudo apt install ros-$ROS_DISTRO-navigation2 \
+  ros-$ROS_DISTRO-nav2-bringup \
+  ros-$ROS_DISTRO-nav2-minimal-tb* \
+  ros-$ROS_DISTRO-slam-toolbox \
+  ros-$ROS_DISTRO-pointcloud-to-laserscan
+```
+
 ## 4. Carla 0.10.0 Setup (Important Compatibility Fix)
 
 Carla 0.10.0 binaries for Linux typically come with a Python API wheel built for Python 3.10 (`cp310`). Since Ubuntu 24.04 uses Python 3.12, we must apply a workaround to install the API.
