@@ -72,4 +72,4 @@ jobs:
           
           . venv/bin/activate
           
-          colcon build --symlink-install --packages-ignore hydrakon_description vision_msgs
+          colcon build --symlink-install --packages-ignore hydrakon_description vision_msgs vision_msgs_rviz_plugins
