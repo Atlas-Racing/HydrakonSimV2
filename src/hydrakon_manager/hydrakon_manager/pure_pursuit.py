@@ -7,6 +7,9 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, PointStamped
 import math
 import numpy as np
+import subprocess
+import os
+import time
 
 class PurePursuitNode(Node):
     def __init__(self):
@@ -21,7 +24,7 @@ class PurePursuitNode(Node):
         self.declare_parameter("track_width_offset", 1.8)  # Slightly narrower offset for tighter control
         self.declare_parameter("steering_gain", 2.0)       # Added missing declaration
         self.declare_parameter("vision_horizon", 15.0)
-        self.declare_parameter("single_side_offset_multiplier", 4.0)
+        self.declare_parameter("single_side_offset_multiplier", 7.0)
 
         self.min_lookahead = self.get_parameter("min_lookahead").value
         self.max_lookahead = self.get_parameter("max_lookahead").value
@@ -44,12 +47,27 @@ class PurePursuitNode(Node):
 
         self.current_speed = 0.0
         
+        # Lap Completion State Machine
+        # 0: START_ZONE (Waiting to leave start area)
+        # 1: RACING     (Driving, looking for finish)
+        # 2: FINISHED   (Stop and Save)
+        # 3: LAP_COOLDOWN (Just crossed finish line, ignore cones briefly)
+        self.state = 0 
+        self.start_time = self.get_clock().now()
+        self.cooldown_start_time = None
+        self.lap_count = 0
+        self.target_laps = 2
+        
         self.get_logger().info("Robust Pure Pursuit Node Started")
 
     def odom_callback(self, msg):
         self.current_speed = msg.twist.twist.linear.x
 
     def marker_callback(self, msg):
+        if self.state == 2: # FINISHED
+            self.stop()
+            return
+
         if not msg.markers:
             self.stop()
             return
@@ -63,6 +81,7 @@ class PurePursuitNode(Node):
 
         blue_cones = []
         yellow_cones = []
+        orange_cones = []
         
         rejected_range = 0
         rejected_color = 0
@@ -89,9 +108,60 @@ class PurePursuitNode(Node):
                 blue_cones.append(p)
             elif r > 0.9 and g > 0.9: # Yellow (Right)
                 yellow_cones.append(p)
+            elif r > 0.9 and 0.4 < g < 0.6: # Orange
+                orange_cones.append(p)
             else:
                 rejected_color += 1
         
+        # State Machine Logic
+        current_time = self.get_clock().now()
+        time_elapsed = (current_time - self.start_time).nanoseconds / 1e9
+        
+        if self.state == 0: # START_ZONE
+            # We assume we start seeing orange cones. 
+            # We switch to RACING only when we DON'T see them anymore and have driven a bit.
+            if len(orange_cones) == 0 and time_elapsed > 5.0:
+                self.get_logger().info("Left Start Zone. RACING MODE ACTIVE.")
+                self.state = 1
+                
+        elif self.state == 1: # RACING
+            # Now if we see orange cones, it's the finish line.
+            # Only consider cones that are "really near" (< 5.0m) to avoid premature stopping
+            close_orange_cones = [p for p in orange_cones if p[0] < 5.0]
+            
+            if len(close_orange_cones) >= 2:
+                self.lap_count += 1
+                self.get_logger().info(f"LAP {self.lap_count} COMPLETED!")
+                
+                if self.lap_count >= self.target_laps:
+                    self.get_logger().info("Target laps reached. Stopping and Saving Map...")
+                    self.stop()
+                    self.state = 2
+                    
+                    # Wait for map update
+                    time.sleep(2.0)
+
+                    # Auto-save Map
+                    map_path = "/home/abdul/Documents/CARLA_2025/HydrakonSimV2/my_track_map"
+                    try:
+                        cmd = ["ros2", "run", "nav2_map_server", "map_saver_cli", "-f", map_path]
+                        self.get_logger().info(f"Executing: {' '.join(cmd)}")
+                        subprocess.run(cmd, check=True)
+                        self.get_logger().info(f"Map successfully saved to {map_path}")
+                    except subprocess.CalledProcessError as e:
+                        self.get_logger().error(f"Failed to save map: {e}")
+                    return
+                else:
+                    self.get_logger().info("Starting next lap. Entering Cooldown...")
+                    self.state = 3
+                    self.cooldown_start_time = current_time
+
+        elif self.state == 3: # LAP_COOLDOWN
+             cooldown_elapsed = (current_time - self.cooldown_start_time).nanoseconds / 1e9
+             if cooldown_elapsed > 5.0:
+                 self.get_logger().info("Cooldown finished. Resuming Race Mode.")
+                 self.state = 1
+
         target_point = None
         
         # Strategy: "Anchor to the furthest visible gate"
