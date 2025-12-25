@@ -46,6 +46,7 @@ class PurePursuitNode(Node):
         self.target_pub = self.create_publisher(PointStamped, '/pure_pursuit/target', 10)
 
         self.current_speed = 0.0
+        self.path_points = []
         
         # Lap Completion State Machine
         # 0: START_ZONE (Waiting to leave start area)
@@ -56,12 +57,14 @@ class PurePursuitNode(Node):
         self.start_time = self.get_clock().now()
         self.cooldown_start_time = None
         self.lap_count = 0
-        self.target_laps = 2
+        self.target_laps = 1
         
         self.get_logger().info("Robust Pure Pursuit Node Started")
 
     def odom_callback(self, msg):
         self.current_speed = msg.twist.twist.linear.x
+        if self.state != 2:
+            self.path_points.append((msg.pose.pose.position.x, msg.pose.pose.position.y))
 
     def marker_callback(self, msg):
         if self.state == 2: # FINISHED
@@ -150,6 +153,17 @@ class PurePursuitNode(Node):
                         self.get_logger().info(f"Map successfully saved to {map_path}")
                     except subprocess.CalledProcessError as e:
                         self.get_logger().error(f"Failed to save map: {e}")
+
+                    # Save Path
+                    path_file = "/home/abdul/Documents/CARLA_2025/HydrakonSimV2/my_track_path.csv"
+                    try:
+                        with open(path_file, 'w') as f:
+                            f.write("x,y\n")
+                            for px, py in self.path_points:
+                                f.write(f"{px},{py}\n")
+                        self.get_logger().info(f"Path successfully saved to {path_file}")
+                    except Exception as e:
+                        self.get_logger().error(f"Failed to save path: {e}")
                     return
                 else:
                     self.get_logger().info("Starting next lap. Entering Cooldown...")

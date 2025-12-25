@@ -23,10 +23,11 @@ setup(
             'vehicle_spawner = hydrakon_manager.vehicle_node:main',
             'manual_control = hydrakon_manager.manual_control:main',
             'carla_bridge = hydrakon_manager.carla_to_ros_bridge:main',
-            'ins_node = hydrakon_manager.ins_node:main',
             'lidar_node = hydrakon_manager.lidar_node:main',
+            'ins_node = hydrakon_manager.ins_node:main',
             'pure_pursuit = hydrakon_manager.pure_pursuit:main',
             'cone_fusion = hydrakon_manager.cone_fusion_node:main',
+            'lap_manager = hydrakon_manager.lap_manager:main',
         ],
     },
 )

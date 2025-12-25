@@ -79,7 +79,7 @@ def generate_launch_description():
 
         # 4. Force Initial Pose (Manual Publish)
         TimerAction(
-            period=5.0,
+            period=15.0,
             actions=[
                 ExecuteProcess(
                     cmd=[
@@ -89,6 +89,19 @@ def generate_launch_description():
                     ],
                     output='screen'
                 )
+            ]
+        ),
+
+        # 5. Lap Manager (Waypoints for Nav2)
+        Node(
+            package='hydrakon_manager',
+            executable='lap_manager',
+            name='lap_manager_node',
+            output='screen',
+            parameters=[
+                {'path_file': '/home/abdul/Documents/CARLA_2025/HydrakonSimV2/my_track_path.csv'},
+                {'waypoint_spacing': 5.0},
+                {'laps': 3}
             ]
         )
     ])
