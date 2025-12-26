@@ -1,10 +1,12 @@
-# Hydraconnect: Remote Connection Guide
+---
+title: 6. Hydraconnect Guide (Remote Connection)
+---
 
 This guide details the "Hydraconnect" workflow, which enables hybrid development scenarios where team members can run the ROS 2 stack locally while connecting to a remote CARLA simulation server.
 
 ## Overview
 
-By default, HydrakonSimV2 connects to `localhost`. To connect to a remote server (e.g., a powerful simulation rig or the tracking PC), you need to:
+By default, HydrakonSimV2 connects to `localhost`. To connect to a remote server you need to:
 1.  Configure Fast DDS for network discovery.
 2.  Launch the system with the `host` argument.
 
@@ -96,24 +98,4 @@ If running everything on one machine, simply omit the `host` argument:
 
 ```bash
 ros2 launch hydrakon_launch launch.py
-```
-
-## 3. Other Workflows
-
-The `host` argument is supported across all major launch files, allowing you to run mapping or navigation stacks locally while interacting with a remote CARLA instance.
-
-### Mapping Lap (SLAM)
-
-To run SLAM and generate a map from a remote simulation:
-
-```bash
-ros2 launch hydrakon_launch mapping_lap.launch.py host:=10.6.137.88
-```
-
-### Navigation (Nav2)
-
-To run the full Navigation 2 stack with a remote simulation:
-
-```bash
-ros2 launch hydrakon_launch navigation.launch.py host:=10.6.137.88
 ```
