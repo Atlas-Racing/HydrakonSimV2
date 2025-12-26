@@ -2,7 +2,6 @@
 
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy
 import carla
 import numpy as np
 from sensor_msgs.msg import Image
@@ -29,11 +28,7 @@ class RGBCameraSpawnerNode(Node):
         self.world = None
         self.vehicle = None
 
-        qos_profile = QoSProfile(
-            reliability=ReliabilityPolicy.BEST_EFFORT,
-            depth=10
-        )
-        self.rgb_publisher = self.create_publisher(Image, '/camera/raw', qos_profile)
+        self.rgb_publisher = self.create_publisher(Image, '/camera/raw', 10)
         self.bridge = CvBridge()
         
         self.setup()
