@@ -34,6 +34,12 @@ def generate_launch_description():
         default_value='False',
         description='Enable Greenwave Monitor (TUI)'
     )
+
+    rviz_arg = DeclareLaunchArgument(
+        'rviz',
+        default_value='True',
+        description='Launch RViz'
+    )
     
     from launch.conditions import IfCondition
     
@@ -49,6 +55,7 @@ def generate_launch_description():
         benchmark_arg,
         manual_control_arg,
         gw_arg,
+        rviz_arg,
         
         hydrakon_description_launch,
 
@@ -249,6 +256,7 @@ def generate_launch_description():
             executable='rviz2',
             name='rviz2',
             output='screen',
+            condition=IfCondition(LaunchConfiguration('rviz')),
             arguments=['-d', os.path.join(get_package_share_directory('hydrakon_launch'), 'rviz', 'custom.rviz')]
         )
         
