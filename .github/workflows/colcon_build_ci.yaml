@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - nav2
     paths:
       - 'src/**'
       - '.github/workflows/colcon_build_ci.yaml'
