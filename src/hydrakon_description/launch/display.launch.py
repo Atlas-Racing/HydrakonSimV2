@@ -11,8 +11,16 @@ def generate_launch_description():
 
     xacro_file = os.path.join(get_package_share_directory(pkg_name), file_subpath)
     robot_description = Command(['xacro ', xacro_file])
+    
+    host_arg = DeclareLaunchArgument(
+        'host',
+        default_value='localhost',
+        description='Carla Host IP'
+    )
 
     return LaunchDescription([
+        host_arg,
+
         # 1. Publish the Robot State (TF Tree)
         Node(
             package='robot_state_publisher',
@@ -34,6 +42,9 @@ def generate_launch_description():
             package='hydrakon_manager',
             executable='carla_bridge',
             name='carla_bridge',
-            output='screen'
+            output='screen',
+            parameters=[
+                {'carla_host': LaunchConfiguration('host')}
+            ]
         )
     ])

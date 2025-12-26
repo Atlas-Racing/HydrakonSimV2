@@ -81,6 +81,7 @@ This launch file acts as the main entry point for the simulation system. It orch
 | `manual_control` | `False` | Set to `True` to launch the Pygame manual control window. |
 | `gw` | `False` | Set to `True` to launch the Greenwave Monitor (TUI). |
 | `rviz` | `True` | Set to `False` to disable RViz visualization. |
+| `host` | `localhost` | IP address of the CARLA simulator (supports remote connection). |
 
 ---
 

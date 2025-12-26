@@ -17,8 +17,16 @@ def generate_launch_description():
     map_dir = os.path.join(home_dir, 'HydrakonSimV2', 'my_track_map.yaml') 
     params_file = os.path.join(hydrakon_launch_dir, 'config', 'nav2_params.yaml')
 
+    host_arg = DeclareLaunchArgument(
+        'host',
+        default_value='localhost',
+        description='Carla Host IP'
+    )
+
     return LaunchDescription([
         
+        host_arg,
+
         DeclareLaunchArgument(
             'use_sim_time',
             default_value='false',
@@ -31,7 +39,7 @@ def generate_launch_description():
             name='carla_bridge_nav',
             output='screen',
             parameters=[
-                {'carla_host': 'localhost'},
+                {'carla_host': LaunchConfiguration('host')},
                 {'carla_port': 2000}
             ]
         ),
