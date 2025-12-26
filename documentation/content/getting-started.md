@@ -37,6 +37,7 @@ For a comprehensive list and detailed descriptions of all launch arguments, plea
 *   `benchmark`: Enable inference timing logging (default: `False`).
 *   `manual_control`: Enable Pygame window for driving the vehicle (default: `False`).
 *   `gw`: Enable Greenwave Monitor TUI (default: `False`).
+*   `rviz`: Launch RViz2 for visualization (default: `True`).
 
 ### Examples
 
@@ -58,9 +59,16 @@ source venv/bin/activate && source install/setup.bash && export PYTHONPATH=$PYTH
 
 ## Visualization in RViz
 
-The system publishes 3D markers for detected cones, allowing you to visualize their positions in 3D space.
+RViz2 is launched by default to visualize the system state and detected cones.
 
-1.  **Start the Simulation:** Run one of the launch commands above.
+*   To **disable** RViz launch:
+    ```bash
+    ros2 launch hydrakon_launch launch.py rviz:=False
+    ```
+
+If you need to configure RViz manually or launch it separately:
+
+1.  **Start the Simulation:** Run one of the launch commands above with `rviz:=False`.
 2.  **Open RViz2:**
     ```bash
     ros2 run rviz2 rviz2

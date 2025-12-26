@@ -65,6 +65,13 @@ This launch file acts as the main entry point for the simulation system. It orch
 - **Arguments:** `0 0 0.7 0 0 0 base_link cone_frame`
 - **Description:** Publishes a static transform between `base_link` and `cone_frame`. The `cone_frame` is offset by `0.5` meters along the Z-axis from `base_link` to lift the visualized cones off the ground.
 
+### 9. RViz2
+- **Node Name:** `rviz2`
+- **Package:** `rviz2`
+- **Executable:** `rviz2`
+- **Description:** 3D visualization tool for ROS 2. Launches with a custom configuration file (`custom.rviz`) to visualize the vehicle, sensor data, and cone detections.
+- **Condition:** Enabled unless the `rviz` launch argument is set to `False` (default is `True`).
+
 ## Launch Arguments
 
 | Argument | Default Value | Description |
@@ -73,6 +80,7 @@ This launch file acts as the main entry point for the simulation system. It orch
 | `benchmark` | `False` | Enable benchmarking mode for inference timing statistics. |
 | `manual_control` | `False` | Set to `True` to launch the Pygame manual control window. |
 | `gw` | `False` | Set to `True` to launch the Greenwave Monitor (TUI). |
+| `rviz` | `True` | Set to `False` to disable RViz visualization. |
 
 ---
 
