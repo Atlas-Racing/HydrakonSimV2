@@ -28,8 +28,14 @@ class ManualControlNode(Node):
         self.vehicle = None
         self.camera = None
         
-        self.image_width = 800
-        self.image_height = 600
+        if self.host in ["localhost", "127.0.0.1"]:
+            self.image_width = 800
+            self.image_height = 600
+        else:
+            self.image_width = 400
+            self.image_height = 300
+            self.get_logger().info(f"Remote host detected ({self.host}). Using low resolution: {self.image_width}x{self.image_height}")
+            
         self.latest_image = None
         self.lock = threading.Lock()
         
