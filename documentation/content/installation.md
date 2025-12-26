@@ -1,5 +1,5 @@
 ---
-title: 3. Installation Guide
+title: 2. Installation Guide
 ---
 
 Follow these steps to set up the HydrakonSimV2 environment.

@@ -1,5 +1,5 @@
 ---
-title: 2. Getting Started
+title: 3. Getting Started
 ---
 
 ## Building the Workspace
