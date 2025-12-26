@@ -32,8 +32,8 @@ class ManualControlNode(Node):
             self.image_width = 800
             self.image_height = 600
         else:
-            self.image_width = 400
-            self.image_height = 300
+            self.image_width = 320
+            self.image_height = 240
             self.get_logger().info(f"Remote host detected ({self.host}). Using low resolution: {self.image_width}x{self.image_height}")
             
         self.latest_image = None
