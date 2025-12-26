@@ -1,5 +1,5 @@
 ---
-title: 6. Hydraconnect Guide (Remote Connection)
+title: 6. Hydraconnect Guide
 ---
 
 This guide details the "Hydraconnect" workflow, which enables hybrid development scenarios where team members can run the ROS 2 stack locally while connecting to a remote CARLA simulation server.
