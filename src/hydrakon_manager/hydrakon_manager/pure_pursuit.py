@@ -56,7 +56,7 @@ class PurePursuitNode(Node):
         self.start_time = self.get_clock().now()
         self.cooldown_start_time = None
         self.lap_count = 0
-        self.target_laps = 2
+        self.target_laps = 1
         
         self.get_logger().info("Robust Pure Pursuit Node Started")
 
@@ -141,8 +141,8 @@ class PurePursuitNode(Node):
                     # Wait for map update
                     time.sleep(2.0)
 
-                    # Auto-save Map
-                    map_path = os.path.join(os.path.expanduser("~"), "HydrakonSimV2", "my_track_map")
+                    # Auto-save Map - Path updated to be relative to the current workspace
+                    map_path = os.path.join(os.getcwd(), "my_track_map")
                     try:
                         cmd = ["ros2", "run", "nav2_map_server", "map_saver_cli", "-f", map_path]
                         self.get_logger().info(f"Executing: {' '.join(cmd)}")
