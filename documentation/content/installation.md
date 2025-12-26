@@ -23,7 +23,7 @@ git submodule update --init --recursive
 It is highly recommended to use a virtual environment to manage Python dependencies and avoid conflicts with system packages (especially for the Carla "hack").
 
 ```bash
-python3 -m venv venv
+python3 -m venv venv --system-site-packages
 source venv/bin/activate
 ```
 
