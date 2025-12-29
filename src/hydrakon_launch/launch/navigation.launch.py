@@ -14,7 +14,7 @@ def generate_launch_description():
     # Configuration Variables
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     home_dir = os.path.expanduser('~')
-    map_dir = os.path.join(home_dir, 'HydrakonSimV2', 'my_track_map.yaml') 
+    map_dir = os.path.join(home_dir, 'HydrakonSimV2', 'src', 'hydrakon_description', 'docs', 'map.yaml') 
     params_file = os.path.join(hydrakon_launch_dir, 'config', 'nav2_params.yaml')
 
     host_arg = DeclareLaunchArgument(
@@ -108,7 +108,7 @@ def generate_launch_description():
             name='lap_manager_node',
             output='screen',
             parameters=[
-                {'path_file': '/home/abdul/Documents/CARLA_2025/HydrakonSimV2/my_track_path.csv'},
+                {'path_file': os.path.join(home_dir, 'HydrakonSimV2', 'my_track_path.csv')},
                 {'waypoint_spacing': 5.0},
                 {'laps': 3}
             ]

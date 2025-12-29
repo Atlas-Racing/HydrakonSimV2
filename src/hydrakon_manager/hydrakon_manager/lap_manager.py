@@ -13,7 +13,7 @@ class LapManager(Node):
     def __init__(self):
         super().__init__('lap_manager')
 
-        self.declare_parameter("path_file", "/home/abdul/Documents/CARLA_2025/HydrakonSimV2/my_track_path.csv")
+        self.declare_parameter("path_file", "my_track_path.csv")
         self.declare_parameter("waypoint_spacing", 5.0) # Meters between waypoints
         self.declare_parameter("laps", 3)
 
