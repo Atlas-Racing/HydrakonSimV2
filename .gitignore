@@ -39,3 +39,7 @@ public/
 # Ignore tf visualization files
 *.pdf
 *.gv
+
+# Map files
+*.pgm
+my_track_map.yaml

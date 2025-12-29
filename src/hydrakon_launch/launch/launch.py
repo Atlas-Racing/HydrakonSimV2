@@ -34,6 +34,18 @@ def generate_launch_description():
         default_value='False',
         description='Enable Greenwave Monitor (TUI)'
     )
+
+    rviz_arg = DeclareLaunchArgument(
+        'rviz',
+        default_value='True',
+        description='Launch RViz'
+    )
+    
+    host_arg = DeclareLaunchArgument(
+        'host',
+        default_value='localhost',
+        description='Carla Host IP'
+    )
     
     from launch.conditions import IfCondition
     
@@ -41,7 +53,8 @@ def generate_launch_description():
     hydrakon_description_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(hydrakon_description_dir, 'launch', 'display.launch.py')
-        )
+        ),
+        launch_arguments={'host': LaunchConfiguration('host')}.items()
     )
 
     return LaunchDescription([
@@ -49,6 +62,8 @@ def generate_launch_description():
         benchmark_arg,
         manual_control_arg,
         gw_arg,
+        rviz_arg,
+        host_arg,
         
         hydrakon_description_launch,
 
@@ -97,7 +112,7 @@ def generate_launch_description():
             name='carla_vehicle_spawner',
             output='screen',
             parameters=[
-                {'carla_host': 'localhost'},
+                {'carla_host': LaunchConfiguration('host')},
                 {'carla_port': 2000}
             ]
         ),
@@ -109,7 +124,7 @@ def generate_launch_description():
             output='screen',
             condition=IfCondition(LaunchConfiguration('manual_control')),
             parameters=[
-                {'carla_host': 'localhost'},
+                {'carla_host': LaunchConfiguration('host')},
                 {'carla_port': 2000}
             ]
         ),
@@ -123,7 +138,7 @@ def generate_launch_description():
                     name='carla_depth_camera_spawner',
                     output='screen',
                     parameters=[
-                        {'carla_host': 'localhost'},
+                        {'carla_host': LaunchConfiguration('host')},
                         {'carla_port': 2000},
                         {'camera_width': 800},
                         {'camera_height': 600},
@@ -141,6 +156,9 @@ def generate_launch_description():
                     executable='rgb_camera_spawner',
                     name='carla_rgb_camera_spawner',
                     output='screen',
+                    parameters=[
+                        {'carla_host': LaunchConfiguration('host')}
+                    ]
                 )
             ]
         ),
@@ -154,7 +172,7 @@ def generate_launch_description():
                     name='ins_node',
                     output='screen',
                     parameters=[
-                        {'carla_host': 'localhost'},
+                        {'carla_host': LaunchConfiguration('host')},
                         {'carla_port': 2000}
                     ]
                 )
@@ -170,7 +188,7 @@ def generate_launch_description():
                     name='lidar_node',
                     output='screen',
                     parameters=[
-                        {'carla_host': 'localhost'},
+                        {'carla_host': LaunchConfiguration('host')},
                         {'carla_port': 2000}
                     ]
                 )
@@ -249,6 +267,7 @@ def generate_launch_description():
             executable='rviz2',
             name='rviz2',
             output='screen',
+            condition=IfCondition(LaunchConfiguration('rviz')),
             arguments=['-d', os.path.join(get_package_share_directory('hydrakon_launch'), 'rviz', 'custom.rviz')]
         )
         

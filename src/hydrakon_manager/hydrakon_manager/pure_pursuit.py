@@ -144,8 +144,8 @@ class PurePursuitNode(Node):
                     # Wait for map update
                     time.sleep(2.0)
 
-                    # Auto-save Map
-                    map_path = "/home/abdul/Documents/CARLA_2025/HydrakonSimV2/my_track_map"
+                    # Auto-save Map - Path updated to be relative to the current workspace
+                    map_path = os.path.join(os.getcwd(), "my_track_map")
                     try:
                         cmd = ["ros2", "run", "nav2_map_server", "map_saver_cli", "-f", map_path]
                         self.get_logger().info(f"Executing: {' '.join(cmd)}")

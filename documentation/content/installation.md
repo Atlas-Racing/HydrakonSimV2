@@ -1,5 +1,5 @@
 ---
-title: 3. Installation Guide
+title: 2. Installation Guide
 ---
 
 Follow these steps to set up the HydrakonSimV2 environment.
@@ -23,7 +23,7 @@ git submodule update --init --recursive
 It is highly recommended to use a virtual environment to manage Python dependencies and avoid conflicts with system packages (especially for the Carla "hack").
 
 ```bash
-python3 -m venv venv
+python3 -m venv venv --system-site-packages
 source venv/bin/activate
 ```
 
@@ -35,6 +35,18 @@ Install the required Python libraries. Note that we strictly require **NumPy < 2
 
 ```bash
 pip install "numpy<2" torch torchvision ultralytics opencv-python onnx onnxruntime-gpu
+```
+
+### Install ROS 2 Navigation Packages
+
+Install the necessary packages for SLAM and Navigation. Replace `$ROS_DISTRO` with your active ROS 2 distribution (e.g., `jazzy`).
+
+```bash
+sudo apt install ros-$ROS_DISTRO-navigation2 \
+  ros-$ROS_DISTRO-nav2-bringup \
+  ros-$ROS_DISTRO-nav2-minimal-tb* \
+  ros-$ROS_DISTRO-slam-toolbox \
+  ros-$ROS_DISTRO-pointcloud-to-laserscan
 ```
 
 ## 4. Carla 0.10.0 Setup (Important Compatibility Fix)

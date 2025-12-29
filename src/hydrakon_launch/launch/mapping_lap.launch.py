@@ -19,6 +19,12 @@ def generate_launch_description():
         description='Carla Host IP'
     )
 
+    host_arg = DeclareLaunchArgument(
+        'host',
+        default_value='localhost',
+        description='Carla Host IP'
+    )
+
     return LaunchDescription([
         
         host_arg,
@@ -35,6 +41,7 @@ def generate_launch_description():
             name='carla_bridge_slam',
             output='screen',
             parameters=[
+                {'carla_host': LaunchConfiguration('host')},
                 {'carla_host': LaunchConfiguration('host')},
                 {'carla_port': 2000}
             ]
@@ -97,6 +104,33 @@ def generate_launch_description():
                 {'use_sim_time': use_sim_time},
                 {'autostart': True},
                 {'node_names': ['slam_toolbox']}
+            ]
+        ),
+        # ========================================================================================
+
+        # ========================================================================================
+        # ROS 2 VERSION HANDLING
+        # ----------------------------------------------------------------------------------------
+        # OPTION 1: ROS 2 HUMBLE (Ubuntu 22.04) - "The Old Way"
+        # On Humble, SLAM Toolbox often auto-starts. The Lifecycle Manager is optional or handled differently.
+        # TO USE: Comment out the "OPTION 2" block below.
+        # ========================================================================================
+
+        # ========================================================================================
+        # OPTION 2: ROS 2 JAZZY (Ubuntu 24.04) - "The New Way"
+        # On Jazzy, SLAM Toolbox is a strict Lifecycle Node and stays 'Unconfigured' without this manager.
+        # TO USE: Keep this block uncommented.
+        # ========================================================================================
+        Node(
+            package='nav2_lifecycle_manager',
+            executable='lifecycle_manager',
+            name='lifecycle_manager_slam',
+            output='screen',
+            parameters=[
+                {'use_sim_time': use_sim_time},
+                {'autostart': True},
+                {'node_names': ['slam_toolbox']},
+                {'bond_timeout': 0.0}
             ]
         ),
         # ========================================================================================

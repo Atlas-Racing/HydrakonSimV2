@@ -65,6 +65,13 @@ This launch file acts as the main entry point for the simulation system. It orch
 - **Arguments:** `0 0 0.7 0 0 0 base_link cone_frame`
 - **Description:** Publishes a static transform between `base_link` and `cone_frame`. The `cone_frame` is offset by `0.5` meters along the Z-axis from `base_link` to lift the visualized cones off the ground.
 
+### 9. RViz2
+- **Node Name:** `rviz2`
+- **Package:** `rviz2`
+- **Executable:** `rviz2`
+- **Description:** 3D visualization tool for ROS 2. Launches with a custom configuration file (`custom.rviz`) to visualize the vehicle, sensor data, and cone detections.
+- **Condition:** Enabled unless the `rviz` launch argument is set to `False` (default is `True`).
+
 ## Launch Arguments
 
 | Argument | Default Value | Description |
@@ -73,3 +80,43 @@ This launch file acts as the main entry point for the simulation system. It orch
 | `benchmark` | `False` | Enable benchmarking mode for inference timing statistics. |
 | `manual_control` | `False` | Set to `True` to launch the Pygame manual control window. |
 | `gw` | `False` | Set to `True` to launch the Greenwave Monitor (TUI). |
+| `rviz` | `True` | Set to `False` to disable RViz visualization. |
+| `host` | `localhost` | IP address of the CARLA simulator (supports remote connection). |
+
+---
+
+# Additional Launch Files
+
+## Mapping Lap
+
+**Source File:** `src/hydrakon_launch/launch/mapping_lap.launch.py`
+
+**Usage:**
+```bash
+ros2 launch hydrakon_launch mapping_lap.launch.py
+```
+
+This launch file is used for generating a map of the environment using SLAM (Simultaneous Localization and Mapping). It integrates LiDAR data from CARLA with the ROS 2 SLAM Toolbox.
+
+### Key Nodes
+*   **Carla Bridge:** Provides Odometry and TF from CARLA.
+*   **Pointcloud to LaserScan:** Converts 3D LiDAR point clouds into 2D laser scans required by `slam_toolbox`.
+*   **SLAM Toolbox:** Performs online asynchronous SLAM to build a map.
+*   **Pure Pursuit:** A basic path tracking algorithm (starts after a delay).
+
+## Navigation
+
+**Source File:** `src/hydrakon_launch/launch/navigation.launch.py`
+
+**Usage:**
+```bash
+ros2 launch hydrakon_launch navigation.launch.py
+```
+
+This launch file initializes the full Navigation 2 (Nav2) stack for autonomous navigation within a pre-built map.
+
+### Key Nodes
+*   **Carla Bridge:** Provides Odometry and TF.
+*   **Pointcloud to LaserScan:** Converts LiDAR data for the local costmap (obstacle avoidance).
+*   **Nav2 Bringup:** Launches the core Nav2 stack (planner, controller, behavior trees, etc.) with the specified map and configuration.
+*   **Initial Pose:** Automatically publishes an initial pose estimate to localize the robot on the map.

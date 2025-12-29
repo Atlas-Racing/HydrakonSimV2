@@ -28,8 +28,14 @@ class ManualControlNode(Node):
         self.vehicle = None
         self.camera = None
         
-        self.image_width = 800
-        self.image_height = 600
+        if self.host in ["localhost", "127.0.0.1"]:
+            self.image_width = 800
+            self.image_height = 600
+        else:
+            self.image_width = 320
+            self.image_height = 240
+            self.get_logger().info(f"Remote host detected ({self.host}). Using low resolution: {self.image_width}x{self.image_height}")
+            
         self.latest_image = None
         self.lock = threading.Lock()
         
@@ -199,8 +205,6 @@ def main(args=None):
                 f"Brake: {current_control.brake:.1f}",
                 f"Reverse: {current_control.reverse}",
                 f"FPS: {clock.get_fps():.0f}",
-                "Mode: Manual (WASD) & Subscriber (/cmd_vel)",
-                "Controls: W=Gas, S=Brake, A/D=Steer, Space=Handbrake, Q=Toggle Reverse"
             ]
             
             for i, line in enumerate(hud_text):

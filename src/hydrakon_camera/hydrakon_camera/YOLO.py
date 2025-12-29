@@ -2,6 +2,7 @@
 
 import rclpy
 from rclpy.node import Node
+import os
 import cv2
 import numpy as np
 from cv_bridge import CvBridge
@@ -16,10 +17,12 @@ class ConeDetectorPT(Node):
         super().__init__('cone_detector_pt_node')
         self.bridge = CvBridge()
         
-        self.declare_parameter('model_path', '/home/aditya/HydrakonSimV2/src/hydrakon_camera/hydrakon_camera/models/best.onnx')
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        default_model_path = os.path.join(script_dir, 'models', 'best.onnx')
+        
+        self.declare_parameter('model_path', default_model_path)
         self.declare_parameter('benchmark', False)
         
-        # Get parameter values
         model_path = self.get_parameter('model_path').get_parameter_value().string_value
         self.benchmark_mode = self.get_parameter('benchmark').get_parameter_value().bool_value
         
