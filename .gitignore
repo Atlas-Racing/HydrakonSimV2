@@ -43,3 +43,6 @@ public/
 # Map files
 *.pgm
 my_track_map.yaml
+
+# submodule
+Depth-Anything-V2
